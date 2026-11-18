@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Frequent</title>
+<meta name="description" content="Learn the words and signs that come up most, in real scenes. Free, on any phone.">
+<link rel="icon" href="greek/icon.svg" type="image/svg+xml">
+<style>
+:root { --bg: #f7f4ee; --paper: #fffdf8; --ink: #23211d; --muted: #5f5a50; --line: #ddd6c8; --blue: #1f5fa8; --red: #c0392b; --yellow: #d4a017; --green: #2e8b57; }
+@media (prefers-color-scheme: dark) { :root { --bg: #16171b; --paper: #1e2026; --ink: #ece8de; --muted: #a39d90; --line: #30333b; --blue: #6c9bd2; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 "Noto Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-text-size-adjust: 100%; }
+main { max-width: 720px; margin: 0 auto; padding: clamp(28px, 7vw, 64px) clamp(16px, 5vw, 28px) 40px; }
+h1 { font-size: clamp(34px, 8vw, 52px); line-height: 1; margin: 0 0 10px; letter-spacing: -.02em; }
+.bar { display: flex; gap: 4px; margin: 0 0 14px; } .bar i { width: 28px; height: 6px; border-radius: 3px; } 
+.lead { color: var(--muted); font-size: 18px; margin: 0 0 34px; max-width: 34em; }
+.app { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 18px 18px 16px; margin: 0 0 14px; }
+.app h2 { font-size: 20px; margin: 0; } .app .k { color: var(--muted); font-size: 14px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: .06em; }
+.app p { margin: 6px 0 12px; color: var(--muted); }
+.go { display: flex; flex-wrap: wrap; gap: 8px; }
+.go a { display: inline-block; text-decoration: none; color: #fff; background: var(--blue); border-radius: 999px; padding: 9px 16px; font-weight: 600; font-size: 15px; }
+.go a.alt { background: none; color: var(--blue); border: 1px solid var(--line); }
+.soon { color: var(--muted); font-size: 14px; }
+footer { color: var(--muted); font-size: 13px; margin-top: 34px; border-top: 1px solid var(--line); padding-top: 14px; }
+footer a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <div class="bar" aria-hidden="true"><i style="background:var(--red)"></i><i style="background:var(--yellow)"></i><i style="background:var(--green)"></i></div>
+  <h1>Frequent</h1>
+  <p class="lead">Learn what comes up most, in real scenes. Free, no account, and it works on Android, iPhone and computers. Your progress stays on your device.</p>
+
+  <section class="app">
+    <p class="k">Greek</p>
+    <h2>Greekquent</h2>
+    <p>The 1,500 most frequent Greek words, five a day, with stories, games and your own world to grow. Θα τα πούμε.</p>
+    <div class="go"><a href="greek/">Beginner</a><a class="alt" href="greek/intermediate/">Intermediate</a><a class="alt" href="greek/kids/">Kids</a></div>
+  </section>
+
+  <section class="app">
+    <p class="k">Python</p>
+    <h2>Frequent Python</h2>
+    <p>The 180 names that appear most in real Python code, five a day, with examples you can run right on your phone.</p>
+    <div class="go"><a href="python/">Start Python</a></div>
+  </section>
+
+  <section class="app">
+    <p class="k">Byzantine chant</p>
+    <h2>Frequent Chant</h2>
+    <p>The neumes that appear most in real scores, 15 minutes a day, with a drone, playback and hymns to read.</p>
+    <p class="soon">Coming soon.</p>
+  </section>
+
+  <footer>Questions? Text the teacher at <a href="sms:+18033990665">+1 803 399 0665</a>.<br>© 2026 Daniel Ilias Houlis. All rights reserved. Greekquent™ and Frequent™ are trademarks of Daniel Ilias Houlis.</footer>
+</main>
+</body>
+</html>

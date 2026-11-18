@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Frequent Python</title>
+<meta name="description" content="Learn Python from the words real Python code uses most, five a day, with a small real project each week.">
+<meta name="copyright" content="© 2026 Daniel Ilias Houlis. All rights reserved. Frequent is a trademark of Daniel Ilias Houlis.">
+<meta name="theme-color" content="#f5f1e8">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%231f1d1a%27/%3E%3Ctext x=%275%27 y=%2722%27 font-family=%27monospace%27 font-size=%2716%27 fill=%27%23f5f1e8%27%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="mark" aria-hidden="true">&gt;_</span><span>Frequent <b>Python</b></span></div>
+  <button class="mo" id="mo" aria-label="Momentum"><span class="mo-q">Got momentum?</span> <b id="moN">0</b></button>
+  <button class="menu-b" id="menuB" aria-label="Menu" aria-haspopup="true">⋯</button>
+</header>
+<div class="menu" id="menu" hidden>
+  <button data-act="backup">Save a backup file</button>
+  <label class="file-b">Restore from a backup<input type="file" id="restore" accept="application/json,.json"></label>
+  <button data-act="about">About the word list</button>
+</div>
+<main id="main" tabindex="-1"></main>
+<nav class="tabs" aria-label="Sections">
+  <button data-tab="today" class="on">Today</button>
+  <button data-tab="words">Words</button>
+  <button data-tab="project">Project</button>
+  <button data-tab="code">Code</button>
+</nav>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>
