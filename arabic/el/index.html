@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14263f">
+<title>Frequent Αραβικά</title>
+<meta name="description" content="Αραβικά του Λεβάντε για όσους μιλούν ελληνικά. Φράσεις από αληθινές σκηνές, γραμμένες και με ελληνικά γράμματα.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="app.css?v=2026-11-19a">
+</head>
+<body>
+<header class="top">
+  <button class="brand" id="home" aria-label="Σήμερα">
+    <span class="brand-name">Frequent Αραβικά</span>
+    <span class="brand-sub" lang="ar" dir="rtl">منشوفك بعدين</span>
+  </button>
+  <button class="menu-btn" id="menuBtn" aria-label="Μενού" aria-haspopup="true">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+  </button>
+</header>
+<main id="view" tabindex="-1"></main>
+<nav class="tabs" aria-label="Κύρια">
+  <button data-tab="today"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg><span>Σήμερα</span></button>
+  <button data-tab="scenes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/></svg><span>Σκηνές</span></button>
+  <button data-tab="words"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h9"/></svg><span>Λέξεις</span></button>
+  <button data-tab="game"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10l-1 7a4 4 0 0 1-8 0zM9 20h6M12 15v5"/></svg><span>Παιχνίδι</span></button>
+</nav>
+<div id="sheet" class="sheet" hidden></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="data.js?v=2026-11-19a"></script>
+<script src="app.js?v=2026-11-19a"></script>
+</body>
+</html>
