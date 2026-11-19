@@ -21,6 +21,7 @@ h1 { font-size: clamp(34px, 8vw, 52px); line-height: 1; margin: 0 0 10px; letter
 .go { display: flex; flex-wrap: wrap; gap: 8px; }
 .go a { display: inline-block; text-decoration: none; color: #fff; background: var(--blue); border-radius: 999px; padding: 9px 16px; font-weight: 600; font-size: 15px; }
 .go a.alt { background: none; color: var(--blue); border: 1px solid var(--line); }
+.app h2.logo { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; } .app h2.logo img { border-radius: 10px; }
 .soon { color: var(--muted); font-size: 14px; }
 footer { color: var(--muted); font-size: 13px; margin-top: 34px; border-top: 1px solid var(--line); padding-top: 14px; }
 footer a { color: inherit; }
@@ -33,10 +34,8 @@ footer a { color: inherit; }
   <p class="lead">Learn what comes up most, in real scenes. Free, no account, and it works on Android, iPhone and computers. Your progress stays on your device.</p>
 
   <section class="app">
-    <p class="k">Greek</p>
-    <h2>Greekquent</h2>
-    <p>The 1,500 most frequent Greek words, five a day, with stories, games and your own world to grow. Θα τα πούμε.</p>
-    <div class="go"><a href="greek/">Beginner</a><a class="alt" href="greek/intermediate/">Intermediate</a><a class="alt" href="greek/kids/">Kids</a></div>
+    <h2 class="logo"><img src="greek/icon.svg" alt="" width="64" height="64">Greekquent</h2>
+    <div class="go"><a href="greek/kids/">Kids</a><a href="greek/">Beginner</a><a href="greek/intermediate/">Intermediate</a></div>
   </section>
 
   <section class="app">
