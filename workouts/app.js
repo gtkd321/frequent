@@ -90,7 +90,7 @@ const twistsFor = ex => ex.k === 'time' ? TWISTS.time : ex.u === 'sec' ? TWISTS.
 
 // ---------- Saved progress ----------
 const KEY = 'fwo';
-const blank = () => ({ v: 1, log: [], custom: [], skip: 0, skipDay: '' });
+const blank = () => ({ v: 1, log: [], custom: [], weigh: [], skip: 0, skipDay: '' });
 let S = blank();
 try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && typeof s === 'object') S = Object.assign(blank(), s); } catch (e) { /* keep the old text untouched */ }
 let saveT = 0;
@@ -235,7 +235,7 @@ function today() {
   // Today
   const todays = S.log.filter(e => e.d === t);
   show(
-    mom, card,
+    mom, weighRow(), card,
     h('h2', { text: 'Your frequent' }), favBox,
     fav.length ? h('p', { class: 'hint', text: '+ Log repeats what you did last time. Tap a name to change weight, reps or the twist.' }) : null,
     todays.length ? h('h2', { text: `Today · ${todayN} logged` }) : null,
@@ -288,7 +288,7 @@ function exercises() {
 }
 
 function history() {
-  if (!S.log.length) { show(h('h1', { text: 'History' }), h('div', { class: 'empty', text: 'Nothing logged yet. Your sessions will show here, day by day.' })); return; }
+  if (!S.log.length) { show(h('h1', { text: 'History' }), weighSection(), h('h2', { text: 'Workouts' }), h('div', { class: 'empty', text: 'Nothing logged yet. Your sessions will show here, day by day.' })); return; }
   const t = ymd();
   const byDay = {}; for (const e of S.log) (byDay[e.d] = byDay[e.d] || []).push(e);
   const days = Object.keys(byDay).sort().reverse();
@@ -301,6 +301,7 @@ function history() {
   show(
     h('h1', { text: 'History' }),
     h('p', { class: 'sub', text: `${sessions30} gym day${sessions30 === 1 ? '' : 's'} in the last 30.` + (quiet.length ? ` Not touched lately: ${quiet.join(', ')}.` : ' Every body area got some work.') }),
+    weighSection(),
     top.length ? h('h2', { text: 'Most frequent, last 30 days' }) : null,
     top.length ? h('div', { class: 'bars' }, top.map(([id, n]) => h('div', {}, h('span', { text: (exById(id) || { n: id }).n }), h('i', { style: `width:${n / mx * 100}%` }), h('em', { text: n })))) : null,
     days.slice(0, 60).map(d => h('div', { class: 'day' }, h('h3', {}, niceDay(d), h('span', { text: '+' + byDay[d].reduce((a, e) => a + (e.p || 0), 0) })), entryList(byDay[d].slice().reverse()))));
@@ -407,16 +408,21 @@ function restore(file) {
     if (!b || !Array.isArray(b.log)) throw 0;
     const ids = new Set(S.log.map(e => e.id)); for (const e of b.log) if (e && e.id && !ids.has(e.id)) S.log.push(e);
     S.log.sort((a, c) => a.t - c.t);
+    const wids = new Set((S.weigh || []).map(e => e.id)); S.weigh = S.weigh || []; for (const e of b.weigh || []) if (e && e.id && !wids.has(e.id)) S.weigh.push(e);
+    S.weigh.sort((a, c) => a.t - c.t);
     const cids = new Set(S.custom.map(e => e.id)); for (const e of b.custom || []) if (!cids.has(e.id)) S.custom.push(e);
     save(); paintMo(); render(); toast('Backup added. Nothing was erased.');
   }).catch(() => toast('That file is not a Frequent Workouts backup.'));
 }
 function obsidian() {
-  if (!S.log.length) { toast('Nothing logged yet.'); return; }
+  if (!S.log.length && !(S.weigh || []).length) { toast('Nothing logged yet.'); return; }
   const byDay = {}; for (const e of S.log) (byDay[e.d] = byDay[e.d] || []).push(e);
-  let md = `# Frequent Workouts log\n\nExported ${ymd()}. One section per gym day.\n`;
-  for (const d of Object.keys(byDay).sort().reverse()) {
+  const wByDay = {}; for (const w of S.weigh || []) wByDay[w.d] = w;
+  let md = `# Frequent Workouts log\n\nExported ${ymd()}. One section per day.\n`;
+  for (const d of [...new Set([...Object.keys(byDay), ...Object.keys(wByDay)])].sort().reverse()) {
     md += `\n## ${d}\n\n`;
+    if (wByDay[d]) md += `- Weight: ${fmtLb(wByDay[d].lb)} lb${wByDay[d].bf ? ` · ${fmtLb(wByDay[d].bf)}% body fat` : ''} #weigh-in\n`;
+    if (!byDay[d]) continue;
     for (const e of byDay[d]) {
       const ex = exById(e.ex) || { n: e.ex, k: 'load' };
       const bits = [fmtSet(ex, e), e.tw && e.tw !== 'Standard' ? e.tw : '', e.f || '', e.note || ''].filter(Boolean).join(' · ');
@@ -446,12 +452,12 @@ document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { go(b.
 $('#menuB').onclick = e => { e.stopPropagation(); $('#menu').hidden = !$('#menu').hidden; };
 document.addEventListener('click', e => { if (!e.target.closest('#menu')) $('#menu').hidden = true; });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
-$('#menu').addEventListener('click', e => { const a = e.target.dataset.act; if (a === 'backup') backup(); if (a === 'about') about(); if (a === 'obsidian') obsidian(); if (a) $('#menu').hidden = true; });
+$('#menu').addEventListener('click', e => { const a = e.target.dataset.act; if (a === 'backup') backup(); if (a === 'about') about(); if (a === 'obsidian') obsidian(); if (a === 'fitdays') fitdaysHelp(); if (a) $('#menu').hidden = true; });
 $('#restore').onchange = e => { const f = e.target.files[0]; if (f) restore(f); e.target.value = ''; $('#menu').hidden = true; };
 $('#mo').onclick = () => { const t = ymd(); toast(`Momentum ${moScore()} · today +${ptsByDay()[t] || 0}. It fades a little each rest day.`); };
 // A new day while the app stays open: refresh so "today" stays honest.
 let shownDay = ymd();
 document.addEventListener('visibilitychange', () => { if (!document.hidden && ymd() !== shownDay) { shownDay = ymd(); paintMo(); render(); } });
 
-paintMo(); go('today');
+weighFromUrl(); paintMo(); go('today');
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
