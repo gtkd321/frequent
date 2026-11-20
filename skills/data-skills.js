@@ -20,7 +20,7 @@ window.BRANCHES=[
 {id:"music",name:"Chant & music",occ:"Musicians and singers",pay:"$47.80/hr",payN:60000,url:"https://www.bls.gov/ooh/entertainment-and-sports/musicians-and-singers.htm",
  skills:[["music_chant","Daily chant practice"],["music_read","Score reading"]]},
 {id:"fitness",name:"Training",occ:"Fitness trainers and instructors",pay:"$47,160/yr",payN:47160,url:"https://www.bls.gov/ooh/personal-care-and-service/fitness-trainers-and-instructors.htm",
- skills:[["fit_strength","Strength & posture"],["fit_cond","Conditioning toward a 5K"]]},
+ skills:[["fit_strength","Strength & posture"],["fit_cond","Conditioning toward a 5K"],["fit_mobility","Mobility & run-ready feet"]]},
 {id:"psych",name:"Psychology & coaching",occ:"Substance abuse, behavioral disorder and mental health counselors",pay:"$59,350/yr",payN:59350,url:"https://www.bls.gov/ooh/community-and-social-service/substance-abuse-behavioral-disorder-and-mental-health-counselors.htm",
  skills:[["psych_feel","Feeling literacy"],["psych_recovery","Recovery step work"],["psych_coach","Coaching conversations"]]},
 {id:"spirit",name:"Orthodox spiritual life",occ:null,pay:null,payN:0,url:null,

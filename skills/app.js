@@ -52,7 +52,7 @@ function viewToday(){
   <article class="card up-next"><span class="eyebrow">Up next${doneToday[next]?' · done today':''}</span><h3>${P[next].t}</h3><p class="muted">${P[next].d}</p><div class="row" style="margin-top:var(--space-4)"><button class="btn" data-open="${P[next].fn}">${P[next].btn}</button></div></article>
   <div class="stats"><div class="stat"><b>${weekPts()}</b><span>φόρα this week</span></div><div class="stat"><b>${touched}/72</b><span>feelings touched</span></div><div class="stat"><b>${S.inventory.length}</b><span>inventories</span></div></div>
   ${warmCard()}
-  <div class="practice-row">${others.map(k=>`<button class="mini" data-open="${P[k].fn}"><span class="eyebrow">${doneToday[k]?'Done today':'Also today'}</span><h4>${P[k].t}</h4><p>${P[k].d}</p></button>`).join('')}
+  <div class="practice-row">${moveMini()}${treatMini()}${others.map(k=>`<button class="mini" data-open="${P[k].fn}"><span class="eyebrow">${doneToday[k]?'Done today':'Also today'}</span><h4>${P[k].t}</h4><p>${P[k].d}</p></button>`).join('')}
   ${(()=>{const sc=S.chars&&S.chars.length?staleChar():null;return `<button class="mini" data-gotab="write"><span class="eyebrow">Fiction</span><h4>${sc?'How is '+esc(sc.name)+' doing?':'Back to your story'}</h4><p>${sc?'A two-question check-in with your character.':'Add your first character and log a session.'}</p></button>`})()}
   ${(()=>{lifeInit();const d=S.promises.filter(p=>p.kind==='daily');const k=d.filter(p=>((p.log||{})[today()]||0)>=p.clips).length;return `<button class="mini" data-gotab="life"><span class="eyebrow">Life · ${d.length?k+' of '+d.length+' promises kept':'promises to self'}</span><h4>${S.clip.goal?'Trade up: '+esc(clipNow()):'The paper clip game'}</h4><p>${S.clip.goal?'Offer it to someone today.':'Trade one red paper clip up, one person at a time.'}</p></button>`})()}
   ${(()=>{const c=cardOfDay();const n=Object.keys(cardState()).length;return `<button class="mini card-mini" data-open="card">${cardIcon(c.m,44)}<span class="eyebrow">Index cards · ${c.done?'done today':n+' of '+CARD_METHODS.length+' tried'}</span><h4>${c.done?'Tomorrow: next method':esc(c.m.name)}</h4><p>${c.done?'You tried '+esc(c.m.name)+'. Tap to add notes.':esc(c.m.tag)}</p></button>`})()}
@@ -793,10 +793,80 @@ function openWarm(){const t=WARMUP.tips[warmDay()%WARMUP.tips.length];
   <h4>Today’s pointer: ${esc(t.t)}</h4><p class="small">${esc(t.d)}</p><p class="xs">${t.s.map(x=>`<a href="${x[1]}" target="_blank" rel="noopener">${esc(x[0])}</a>`).join(' · ')}</p>
   <details><summary class="small">All pointers</summary><ul class="tight small">${WARMUP.tips.map(x=>`<li><b>${esc(x.t)}.</b> ${esc(x.d)} ${x.s.map(y=>`<a href="${y[1]}" target="_blank" rel="noopener">${esc(y[0])}</a>`).join(' · ')}</li>`).join('')}</ul></details></div>`);
   $('#wDone').addEventListener('click',()=>{const f=$('#wFirst').value.trim();addEntry({title:'Warm-up'+(f?': then '+f:''),skill:'home_ops',mode:'practice',points:1});toast('+1 φόρα');closeSheet();render()})}
+/* ---------- drawings, mobility, run plan, treats ---------- */
+function fig(s,w){const out=[];s.split('|').forEach(t=>{const k=t[0],r=t.slice(2).trim(),n=r.replace(/,/g,' ').split(/\s+/).map(Number);
+  if(k==='W')out.push(`<line x1="${n[0]}" y1="6" x2="${n[0]}" y2="110" class="fg-wall"/>`);
+  else if(k==='F')out.push('<line x1="4" y1="110" x2="156" y2="110" class="fg-floor"/>');
+  else if(k==='L')out.push(`<polyline points="${r}" class="fg-body"/>`);
+  else if(k==='G')out.push(`<polyline points="${r}" class="fg-ghost"/>`);
+  else if(k==='C')out.push(`<circle cx="${n[0]}" cy="${n[1]}" r="8" class="fg-head"/>`);
+  else if(k==='T')out.push(`<circle cx="${n[0]}" cy="${n[1]}" r="8" class="fg-target"/>`);
+  else if(k==='O')out.push(`<circle cx="${n[0]}" cy="${n[1]}" r="${n[2]}" class="fg-arrow"/>`);
+  else if(k==='E')out.push(`<ellipse cx="${n[0]}" cy="${n[1]}" rx="${n[2]}" ry="${n[3]}" class="fg-head"/>`);
+  else if(k==='R')out.push(`<rect x="${n[0]}" y="${n[1]}" width="${n[2]}" height="${n[3]}" class="fg-prop"/>`);
+  else if(k==='P')out.push(`<path d="${r}" class="fg-body"/>`);
+  else if(k==='A')out.push(`<path d="M${n[0]},${n[1]} Q${n[2]},${n[3]} ${n[4]},${n[5]}" class="fg-arrow" marker-end="url(#fgArr)"/>`)});
+  return `<svg class="fig" viewBox="0 -6 160 122" width="${w||160}" role="img" aria-hidden="true"><defs><marker id="fgArr" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--gold)"/></marker></defs>${out.join('')}</svg>`}
+function moveInit(){S.run=S.run||{week:0,logs:[]};S.treats=S.treats||{cur:null,log:[],claimed:[]}}
+const exById=id=>MOVE.ex.find(e=>e.id===id);
+function moveSuggest(){const d=new Date().getDay();return MOVE.routines.find(r=>r.id===([1,3,5].includes(d)?'strong':'daily'))}
+function moveMini(){moveInit();const r=moveSuggest();const done=S.entries.some(e=>e.date===today()&&/^Mobility/.test(e.title||''));
+  return `<button class="mini card-mini" data-open="move">${fig(exById(r.ids[0]).fig,64)}<span class="eyebrow">Mobility · ${done?'done today':'run-ready'}</span><h4>${esc(r.name)} · ${esc(r.time)}</h4><p>Week ${S.run.week+1} of the return-to-run plan. Drawings for every move.</p></button>`}
+function openMove(){moveInit();const R=S.run,wk=R.logs.filter(l=>l.week===R.week),ok=wk.filter(l=>l.pain<=5&&l.am!=='worse').length;
+  const last=R.logs[R.logs.length-1],red=last&&last.week===R.week&&(last.pain>5||last.am==='worse');const pend=R.logs.find(l=>l.am==null&&l.date!==today());
+  const areas=[...new Set(MOVE.ex.map(e=>e.area))];
+  openSheet('Mobility and running',`<div class="stack"><p class="small">${esc(MOVE.note)}</p>
+  <div class="routine-grid">${MOVE.routines.map(r=>`<button class="mini" data-rt="${r.id}"><span class="eyebrow">${esc(r.time)}${r.id===moveSuggest().id?' · today':''}</span><h4>${esc(r.name)}</h4><p class="xs">${esc(r.why)}</p></button>`).join('')}</div>
+  <article class="card"><span class="eyebrow">Return to running · ${esc(MOVE.run[R.week][0])} · ${ok} of 3 sessions</span><h4 style="margin:var(--space-1) 0">${esc(MOVE.run[R.week][1])}</h4><p class="xs muted">${esc(MOVE.runNote)}</p>
+   ${pend?`<div class="notice small" style="margin-top:var(--space-3)">Morning check for the ${fmtDate(pend.date)} run: are you back to your usual?<div class="row" style="margin-top:var(--space-2)"><button class="btn small" data-am="ok">Same or better</button><button class="btn ghost small" data-am="worse">Worse</button></div></div>`:''}
+   ${red?`<p class="small" style="color:var(--warn);margin-top:var(--space-3)">Last run was in the red. Repeat this week, or step back one.</p>`:''}
+   <div class="row" style="margin-top:var(--space-3);align-items:flex-end"><label class="f" style="flex:1">Pain during the run, 0 to 10<select id="runPain">${[0,1,2,3,4,5,6,7,8,9,10].map(i=>`<option>${i}</option>`).join('')}</select></label><button class="btn" id="runLog">Log this run (+2)</button></div>
+   <div class="row" style="margin-top:var(--space-2)">${ok>=3&&R.week<MOVE.run.length-1?`<button class="btn small" id="runUp">Move to ${esc(MOVE.run[R.week+1][0])}</button>`:''}${R.week>0?`<button class="btn ghost small" id="runDown">Step back a week</button>`:''}</div>
+   <details style="margin-top:var(--space-3)"><summary class="small">All 8 weeks</summary><ol class="tight small">${MOVE.run.map((w,i)=>`<li${i===R.week?' style="font-weight:700"':''}>${esc(w[1])}</li>`).join('')}</ol></details></article>
+  <h4>Pain traffic light</h4><ul class="tight small">${MOVE.pain.map(p=>`<li><b>${esc(p[0])}.</b> ${esc(p[1])}</li>`).join('')}</ul><p class="xs"><a href="${MOVE.painSrc[1]}" target="_blank" rel="noopener">${esc(MOVE.painSrc[0])}</a></p>
+  <details><summary class="small">All ${MOVE.ex.length} moves with drawings</summary>${areas.map(a=>`<h4 style="margin-top:var(--space-4)">${a}</h4><div class="ex-grid">${MOVE.ex.filter(e=>e.area===a).map(e=>`<div class="ex-card">${fig(e.fig)}<b class="small">${esc(e.name)}</b><span class="xs muted">${esc(e.dose)}</span><span class="xs">${esc(e.cue)}</span></div>`).join('')}</div>`).join('')}</details>
+  <details><summary class="small">Why strength over stretching</summary><ul class="tight xs">${MOVE.src.map(x=>`<li><a href="${x[1]}" target="_blank" rel="noopener">${esc(x[0])}</a></li>`).join('')}</ul></details>
+  <p class="xs muted">${esc(MOVE.disclaimer)}</p></div>`);
+  const b=$('#sheetBody');
+  b.querySelectorAll('[data-rt]').forEach(x=>x.addEventListener('click',()=>openRoutine(x.dataset.rt,0)));
+  b.querySelectorAll('[data-am]').forEach(x=>x.addEventListener('click',()=>{pend.am=x.dataset.am;save();toast(pend.am==='ok'?'Good. That one counts.':'Noted. Repeat this week.');openMove()}));
+  $('#runLog').addEventListener('click',()=>{const p=+$('#runPain').value;R.logs.push({id:uid(),date:today(),week:R.week,pain:p,am:null});addEntry({title:'Run: '+MOVE.run[R.week][0]+' · pain '+p,skill:'fit_cond',mode:'practice',points:2});toast(p>5?'+2 φόρα. Pain above 5: repeat this week.':'+2 φόρα. Check in tomorrow morning.');openMove()});
+  const up=$('#runUp');if(up)up.addEventListener('click',()=>{R.week++;save();toast('On to '+MOVE.run[R.week][0]);openMove()});
+  const dn=$('#runDown');if(dn)dn.addEventListener('click',()=>{R.week--;save();openMove()})}
+function openRoutine(id,i){const r=MOVE.routines.find(x=>x.id===id),e=exById(r.ids[i]),last=i===r.ids.length-1;
+  openSheet(r.name,`<div class="stack"><button class="btn ghost small" id="rtBack">← All routines</button><span class="eyebrow">${i+1} of ${r.ids.length} · ${esc(e.area)}</span>
+  <div class="fig-big">${fig(e.fig,320)}</div><h3 style="font-family:var(--font-display)">${esc(e.name)}</h3><p><b>${esc(e.dose)}</b></p><p class="small">${esc(e.cue)}</p>${e.test?`<p class="small muted">${esc(e.test)}</p>`:''}
+  <div class="row">${i>0?'<button class="btn ghost" id="rtPrev">Previous</button>':''}${last?'<button class="btn" id="rtDone">Routine done (+2 φόρα)</button>':'<button class="btn" id="rtNext">Next move</button>'}</div><p class="xs muted">${esc(MOVE.disclaimer)}</p></div>`);
+  $('#rtBack').addEventListener('click',openMove);
+  const p=$('#rtPrev');if(p)p.addEventListener('click',()=>openRoutine(id,i-1));
+  const n=$('#rtNext');if(n)n.addEventListener('click',()=>openRoutine(id,i+1));
+  const d=$('#rtDone');if(d)d.addEventListener('click',()=>{addEntry({title:'Mobility: '+r.name,skill:'fit_mobility',mode:'practice',points:2});toast('+2 φόρα');closeSheet();render()})}
+function treatStats(){moveInit();const L=S.treats.log,t=L.filter(x=>x.taken).length;return {n:L.length,t,toBig:TREATS.every-(t%TREATS.every),unlocked:Math.floor(t/TREATS.every)-S.treats.claimed.length}}
+function treatMini(){const st=treatStats(),c=S.treats.cur;
+  return `<button class="mini" data-open="treat"><span class="eyebrow">${c?'Treat waiting':'Treat menu · '+st.t+' of '+st.n+' taken'}</span><h4>${c?esc(c.video||c.treat):'Pick a treat before your next block'}</h4><p>${c?'After: '+esc(c.task):st.unlocked>0?'A big treat is unlocked.':st.toBig+' more blocks to a big treat.'}</p></button>`}
+function openTreat(){const st=treatStats(),T=S.treats,c=T.cur;
+  const tail=`<p class="small"><b>The one rule.</b> ${esc(TREATS.rule)}</p>
+  <details><summary class="small">YouTube rules</summary><ol class="tight small">${TREATS.yt.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></details>
+  <details><summary class="small">Bundle it during the task</summary><ul class="tight small">${TREATS.during.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></details>
+  <details><summary class="small">Why this works</summary><ul class="tight xs">${TREATS.src.map(x=>`<li><a href="${x[1]}" target="_blank" rel="noopener">${esc(x[0])}</a></li>`).join('')}</ul></details>`;
+  const big=st.unlocked>0?`<article class="card"><span class="eyebrow">Big treat unlocked</span><h4>${TREATS.every} treats taken. Pick one this week.</h4><div class="row" style="margin-top:var(--space-2)">${TREATS.big.map((x,i)=>`<button class="btn ghost small" data-big="${i}">${esc(x)}</button>`).join('')}</div></article>`:'';
+  const stats=`<p class="xs muted">Taken ${st.t} of ${st.n} finished blocks${st.n?' ('+Math.round(100*st.t/st.n)+'%)':''} · ${st.toBig} more to a big treat. Taking it is the part that works.</p>`;
+  if(c){openSheet('Treat waiting',`<div class="stack"><span class="eyebrow">Block in progress</span><h3>${esc(c.task)}</h3><p>Then: <b>${esc(c.treat)}</b>${c.video?' · '+esc(c.video):''}</p>
+   <button class="btn" id="tTake">Block done, taking the treat (+1)</button><button class="btn ghost" id="tSkip">Block done, skipping the treat</button><button class="btn ghost small" id="tCancel">Cancel this block</button>${stats}${big}${tail}</div>`);
+   const fin=taken=>{T.log.push({date:today(),task:c.task,treat:c.treat,taken});T.cur=null;addEntry({title:'Block: '+c.task+(taken?' · treat taken':''),skill:'home_ops',mode:'practice',points:1});const s=treatStats();toast(taken?(s.t%TREATS.every===0?'+1 φόρα. Big treat unlocked.':'+1 φόρα. Enjoy it.'):'+1 φόρα. Next time, take it.');closeSheet();render()};
+   $('#tTake').addEventListener('click',()=>fin(true));$('#tSkip').addEventListener('click',()=>fin(false));$('#tCancel').addEventListener('click',()=>{T.cur=null;save();closeSheet();render()})}
+  else{openSheet('Treat menu',`<div class="stack"><p class="small">Choose the treat before you start, then take it right after. Small and immediate beats big and someday.</p>
+   <label class="f">The block (a chore, admin, outreach)<input type="text" id="tTask" maxlength="120" placeholder="Send three olive oil follow-ups"></label>
+   <span class="small"><b>Right after, I get:</b></span><div class="treat-pick">${TREATS.after.map((x,i)=>`<label class="chip-pick"><input type="radio" name="tr" value="${i}"${i===0?' checked':''}> ${esc(x)}</label>`).join('')}</div>
+   <label class="f" id="tVidW">The video, picked now<input type="text" id="tVid" maxlength="160" placeholder="Title or link"></label>
+   <button class="btn" id="tStart">Start the block</button>${stats}${big}${tail}</div>`);
+   const sync=()=>{$('#tVidW').style.display=document.querySelector('input[name=tr]:checked').value==='0'?'':'none'};document.querySelectorAll('input[name=tr]').forEach(x=>x.addEventListener('change',sync));
+   $('#tStart').addEventListener('click',()=>{const task=$('#tTask').value.trim();if(!task){toast('Name the block first.');return}const i=+document.querySelector('input[name=tr]:checked').value;const v=$('#tVid').value.trim();if(i===0&&!v){toast('Pick the video now, before working.');return}T.cur={task,treat:TREATS.after[i],video:i===0?v:'',start:Date.now()};save();toast('Go. The treat is waiting.');closeSheet();render()})}
+  $('#sheetBody').querySelectorAll('[data-big]').forEach(x=>x.addEventListener('click',()=>{T.claimed.push({date:today(),what:TREATS.big[+x.dataset.big]});addEntry({title:'Big treat: '+TREATS.big[+x.dataset.big],skill:'home_ops',mode:'practice',points:0});toast('Enjoy it. You earned it.');openTreat()}))}
 /* ---------- bind ---------- */
 function bindView(){
   const v=$('#view');bindWrite(v);bindSell(v);bindLife(v);bindCompact(v);
-  v.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>({think:openThink,feel:()=>openFeel(),inv:openInv,read:openRead,warm:openWarm,card:()=>openCard(cardOfDay().m.id),shelf:openCardShelf})[b.dataset.open]()));
+  v.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>({think:openThink,feel:()=>openFeel(),inv:openInv,read:openRead,warm:openWarm,move:openMove,treat:openTreat,card:()=>openCard(cardOfDay().m.id),shelf:openCardShelf})[b.dataset.open]()));
   v.querySelectorAll('[data-gotab]').forEach(b=>b.addEventListener('click',()=>{document.querySelector(`.tabs [data-tab=${b.dataset.gotab}]`).click()}));
   v.querySelectorAll('[data-skill]').forEach(b=>b.addEventListener('click',()=>openSkill(b.dataset.skill)));
   v.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{logFilter=b.dataset.filter;render()}));
@@ -805,7 +875,7 @@ function bindView(){
   v.querySelectorAll('[data-quick]').forEach(x=>x.addEventListener('click',()=>quickLog(x.dataset.quick,x.dataset.mode,x.dataset.title)));
   const af=$('#addForm');if(af)af.addEventListener('submit',ev=>{ev.preventDefault();const f=new FormData(af);const e={title:f.get('title'),skill:f.get('skill'),mode:f.get('mode'),diff:+f.get('diff')};addEntry(e);toast(`+${pts(e)} φόρα`);render()});
   const ex=$('#exportBtn');if(ex)ex.addEventListener('click',()=>{const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='skill-tree-backup-'+today()+'.json';document.body.appendChild(a);a.click();a.remove();toast('Backup saved')});
-  const im=$('#importFile');if(im)im.addEventListener('change',async()=>{try{const d=JSON.parse(await im.files[0].text());if(!Array.isArray(d.entries))throw 0;S=Object.assign({entries:[],think:[],feelings:[],inventory:[],stars:{},focusTarget:10,chars:[],people:[],books:[],writing:[],drafts:[],blockHits:{},leads:[],sales:[],bizSteps:{},cardm:{},promises:[],clip:{goal:'',trades:[],offers:[]},identity:'',shelf:[],compacts:[],sellPhone:'+18033990665'},d);save();renderHeader();render();toast('Backup restored')}catch(e){toast('That file is not a Skill Tree backup.')}});
+  const im=$('#importFile');if(im)im.addEventListener('change',async()=>{try{const d=JSON.parse(await im.files[0].text());if(!Array.isArray(d.entries))throw 0;S=Object.assign({entries:[],think:[],feelings:[],inventory:[],stars:{},focusTarget:10,chars:[],people:[],books:[],writing:[],drafts:[],blockHits:{},leads:[],sales:[],bizSteps:{},cardm:{},promises:[],clip:{goal:'',trades:[],offers:[]},identity:'',shelf:[],compacts:[],run:{week:0,logs:[]},treats:{cur:null,log:[],claimed:[]},sellPhone:'+18033990665'},d);save();renderHeader();render();toast('Backup restored')}catch(e){toast('That file is not a Skill Tree backup.')}});
 }
 renderHeader();render();
 })();
