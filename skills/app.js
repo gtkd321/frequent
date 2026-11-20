@@ -32,7 +32,7 @@ function renderHeader(){$('#phoraTotal').innerHTML=`<b>${total()} φόρα</b>${
 /* ---------- tabs ---------- */
 let tab='today',logFilter='all',logSort='new';
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{tab=b.dataset.tab;document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));render();window.scrollTo({top:0})}));
-function render(){const v=$('#view');v.innerHTML=({today:viewToday,write:viewWrite,tree:viewTree,log:viewLog,pivots:viewPivots})[tab]();bindView()}
+function render(){const v=$('#view');v.innerHTML=({today:viewToday,write:viewWrite,sell:viewSell,tree:viewTree,log:viewLog,pivots:viewPivots})[tab]();bindView()}
 
 /* ---------- today ---------- */
 function dayOfYear(){const n=new Date();return Math.floor((n-new Date(n.getFullYear(),0,0))/864e5)}
@@ -53,8 +53,10 @@ function viewToday(){
   <div class="stats"><div class="stat"><b>${weekPts()}</b><span>φόρα this week</span></div><div class="stat"><b>${touched}/72</b><span>feelings touched</span></div><div class="stat"><b>${S.inventory.length}</b><span>inventories</span></div></div>
   <div class="practice-row">${others.map(k=>`<button class="mini" data-open="${P[k].fn}"><span class="eyebrow">${doneToday[k]?'Done today':'Also today'}</span><h4>${P[k].t}</h4><p>${P[k].d}</p></button>`).join('')}
   ${(()=>{const sc=S.chars&&S.chars.length?staleChar():null;return `<button class="mini" data-gotab="write"><span class="eyebrow">Fiction</span><h4>${sc?'How is '+esc(sc.name)+' doing?':'Back to your story'}</h4><p>${sc?'A two-question check-in with your character.':'Add your first character and log a session.'}</p></button>`})()}
+  ${(()=>{const c=cardOfDay();const n=Object.keys(cardState()).length;return `<button class="mini card-mini" data-open="card">${cardIcon(c.m,44)}<span class="eyebrow">Index cards · ${c.done?'done today':n+' of '+CARD_METHODS.length+' tried'}</span><h4>${c.done?'Tomorrow: next method':esc(c.m.name)}</h4><p>${c.done?'You tried '+esc(c.m.name)+'. Tap to add notes.':esc(c.m.tag)}</p></button>`})()}
   <button class="mini" data-open="read"><span class="eyebrow">Optional</span><h4>Deep read</h4><p>Log one Hacker News thread: the problem, their approach, one idea to borrow.</p></button></div>
-  <article class="card ladder-card" style="margin-top:var(--space-5)"><span class="eyebrow">The Ladder · Step ${L[0]} of 30</span><h3 style="font-family:var(--font-display);font-size:var(--text-lg);margin:var(--space-2) 0">${esc(L[1])}</h3><p>${esc(L[2])}</p><p class="note" style="margin-top:var(--space-2)">This question appears in tonight’s inventory.</p></article>`;
+  <article class="card ladder-card" style="margin-top:var(--space-5)"><span class="eyebrow">The Ladder · Step ${L[0]} of 30</span><h3 style="font-family:var(--font-display);font-size:var(--text-lg);margin:var(--space-2) 0">${esc(L[1])}</h3><p>${esc(L[2])}</p><p class="note" style="margin-top:var(--space-2)">This question appears in tonight’s inventory.</p></article>
+  <div class="row" style="margin-top:var(--space-3)"><button class="btn ghost small" data-open="shelf">All index-card methods</button></div>`;
 }
 
 /* ---------- tree ---------- */
@@ -552,10 +554,132 @@ function bindWrite(v){
   const gf=v.querySelector('#gptFile');if(gf)gf.addEventListener('change',()=>gf.files.length&&importGPT([...gf.files]));
 }
 
+/* ---------- sell ---------- */
+['leads','sales'].forEach(k=>{if(!S[k])S[k]=[]});if(!S.bizSteps)S.bizSteps={};if(!S.sellPhone)S.sellPhone='+18033990665';
+let bizTab='ride';
+function dueLeads(){return S.leads.filter(l=>l.nextDate&&l.nextDate<=today()&&!['Won','Not now'].includes(l.stage)).sort((a,b)=>a.nextDate.localeCompare(b.nextDate))}
+function nextStep(bid){const b=BIZ.find(x=>x.id===bid);const d=S.bizSteps[bid]||{};const i=b.steps.findIndex((_,i)=>!d[i]);return i<0?null:{b,i,t:b.steps[i]}}
+function viewSell(){
+  const b=BIZ.find(x=>x.id===bizTab);const due=dueLeads();const d=S.bizSteps[b.id]||{};const done=Object.keys(d).length;
+  const leads=S.leads.filter(l=>l.biz===b.id);const wk=S.leads.reduce((a,l)=>a+(l.touches||[]).filter(t=>daysSince(t.date)<7).length,0);
+  const rev=S.sales.filter(s=>s.biz===b.id&&daysSince(s.date)<30).reduce((a,s)=>a+s.amount,0);
+  const ns=nextStep(b.id);
+  let top;
+  if(due.length){const l=due[0];const bz=BIZ.find(x=>x.id===l.biz);top=`<span class="eyebrow">Follow up · ${esc(bz.short)}${due.length>1?` · ${due.length-1} more due`:''}</span><h3>${esc(l.name)}</h3><p class="muted">${esc(l.next||'Check in')}${l.interest?' · '+esc(l.interest):''}</p><div class="row" style="margin-top:var(--space-4)"><button class="btn" data-lead="${l.id}">Open lead</button></div>`}
+  else if(ns){top=`<span class="eyebrow">Next step · ${esc(b.short)} · ${ns.i+1} of ${b.steps.length}</span><h3 style="font-size:var(--text-lg)">${esc(ns.t[0])}</h3>${ns.t[1]?`<p class="small"><a href="${ns.t[1]}" target="_blank" rel="noopener">Open the link</a></p>`:''}<div class="row" style="margin-top:var(--space-4)"><button class="btn" data-bstep="${ns.i}">Done (+3 φόρα)</button></div>`}
+  else top=`<span class="eyebrow">${esc(b.short)}</span><h3>Every step is done</h3><p class="muted">Keep the follow-ups going.</p>`;
+  const stageCount=STAGES.map(s=>[s,leads.filter(l=>l.stage===s).length]);
+  return `<h1 class="section-title">Sell</h1>
+  <p class="lede">One next action at a time. Due follow-ups come first, then the next concrete step for the business you’re viewing.</p>
+  <div class="seg" style="margin-bottom:var(--space-4)">${BIZ.map(x=>`<button data-biz="${x.id}" aria-pressed="${x.id===b.id}">${esc(x.short)}</button>`).join('')}</div>
+  <article class="card up-next">${top}</article>
+  <div class="stats"><div class="stat"><b>${done}/${b.steps.length}</b><span>steps done</span></div><div class="stat"><b>${leads.filter(l=>!['Won','Not now'].includes(l.stage)).length}</b><span>open leads</span></div><div class="stat"><b>${b.id==='ride'?'$'+rev.toFixed(0):wk}</b><span>${b.id==='ride'?'sales, last 30 days':'follow-ups this week'}</span></div></div>
+  <p class="small muted">${esc(b.lede)}</p>
+  ${b.rules?`<div class="safety" style="margin-top:var(--space-3)">${esc(b.rules)} <a href="${b.rulesUrl}" target="_blank" rel="noopener">Source</a></div>`:''}
+  <div class="row" style="margin-top:var(--space-4)"><button class="btn" data-newlead>+ Add a lead</button>${b.id==='ride'?'<button class="btn ghost" data-sale>+ Log a sale</button>':''}<button class="btn ghost small" data-carcard>Car card with QR</button></div>
+  <h2 class="sub-title">Pipeline</h2>
+  <div class="filters">${stageCount.map(([s,n])=>`<span class="chip" aria-pressed="false">${s} ${n}</span>`).join('')}</div>
+  <div class="card">${leads.length?leads.sort((x,y)=>(x.nextDate||'9').localeCompare(y.nextDate||'9')).map(l=>`<button class="entry lead-row" data-lead="${l.id}"><div><div class="entry-title">${esc(l.name)}</div><div class="entry-meta"><span class="badge ${l.stage==='Won'?'hands':''}">${esc(l.stage)}</span>${l.source?`<span>${esc(l.source)}</span>`:''}${l.nextDate?`<span>${l.nextDate<=today()?'Due ':''}${fmtDate(l.nextDate)}</span>`:''}</div></div><span class="xs muted">${(l.touches||[]).length} touches</span></button>`).join(''):'<p class="empty">No leads yet. Add the first person who showed interest.</p>'}</div>
+  <h2 class="sub-title">Concrete steps</h2>
+  <div class="card">${b.steps.map(([t,u],i)=>`<label class="entry step-row"><span class="row" style="flex-wrap:nowrap;align-items:flex-start;gap:var(--space-3)"><input type="checkbox" data-bstepchk="${i}" ${d[i]?'checked':''}><span class="small">${esc(t)}${u?` <a href="${u}" target="_blank" rel="noopener">Link</a>`:''}${d[i]?` <span class="xs muted">· ${fmtDate(d[i])}</span>`:''}</span></span></label>`).join('')}</div>
+  <h2 class="sub-title">Scripts</h2>
+  <div class="stack">${b.scripts.map(([h,t])=>`<div class="card"><span class="eyebrow">${esc(h)}</span><p class="small" style="margin-top:var(--space-2)">${esc(t)}</p><button class="btn ghost small" style="margin-top:var(--space-2)" data-copy="${esc(t)}">Copy</button></div>`).join('')}</div>`;
+}
+function stepDone(bid,i){S.bizSteps[bid]=S.bizSteps[bid]||{};S.bizSteps[bid][i]=today();const b=BIZ.find(x=>x.id===bid);addEntry({title:b.short+' step: '+b.steps[i][0].slice(0,90),skill:bid==='tour'?'xp_course':'biz_offer',skill2:'biz_sales',mode:'handson',points:3});toast('+3 φόρα')}
+function editLead(id){
+  const l=S.leads.find(x=>x.id===id)||{biz:bizTab,stage:'New'};
+  openSheet(id?'Edit lead':'New lead',`<form class="form" id="lForm">
+  <label class="f">Business<select name="biz">${BIZ.map(b=>`<option value="${b.id}" ${b.id===l.biz?'selected':''}>${esc(b.name)}</option>`).join('')}</select></label>
+  <label class="f">Name<input type="text" name="name" required maxlength="80" value="${esc(l.name)}"></label>
+  <label class="f">Phone or email (only if they offered it)<input type="text" name="contact" maxlength="120" value="${esc(l.contact)}"></label>
+  <label class="f">Where you met<input type="text" name="source" maxlength="80" list="srcList" value="${esc(l.source)}"><datalist id="srcList"><option value="Tasting"><option value="Texted from car card"><option value="Restaurant visit"><option value="Church"><option value="Greek class"><option value="Referral"><option value="Online"></datalist></label>
+  <label class="f">What they care about<input type="text" name="interest" maxlength="160" value="${esc(l.interest)}"></label>
+  <label class="f">Stage<select name="stage">${STAGES.map(s=>`<option ${s===l.stage?'selected':''}>${s}</option>`).join('')}</select></label>
+  <label class="f">Next step<input type="text" name="next" maxlength="160" value="${esc(l.next)}" placeholder="Text the tasting photo"></label>
+  <label class="f">When<input type="date" name="nextDate" value="${esc(l.nextDate||'')}"></label>
+  <button class="btn" type="submit">Save lead</button></form>`);
+  $('#lForm').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));
+    if(id){const prev=l.stage;Object.assign(l,f);if(prev!==f.stage)stageEntry(l)}else{const n=Object.assign({id:uid(),created:today(),touches:[]},f);S.leads.push(n);addEntry({title:'New lead: '+n.name,skill:'biz_sales',mode:'handson',points:1});toast('+1 φόρα')}
+    save();closeSheet()});
+}
+function stageEntry(l){const won=l.stage==='Won';addEntry({title:(won?'Won: ':'Moved to '+l.stage+': ')+l.name,skill:'biz_sales',mode:won?'tested':'handson',points:won?6:2});toast(won?'Won. +6 φόρα':'+2 φόρα')}
+function openLead(id){
+  const l=S.leads.find(x=>x.id===id);const b=BIZ.find(x=>x.id===l.biz);
+  openSheet(l.name,`<p class="small muted">${esc(b.name)}${l.source?' · '+esc(l.source):''}${l.contact?' · '+esc(l.contact):''}</p>
+  ${l.interest?`<p class="small">Cares about: ${esc(l.interest)}</p>`:''}
+  <div><p class="small" style="margin-bottom:var(--space-2)">Stage</p><div class="seg" id="lst">${STAGES.map(s=>`<button type="button" data-st="${s}" aria-pressed="${s===l.stage}">${s}</button>`).join('')}</div></div>
+  <div class="card stack"><span class="eyebrow">Log a touch</span><div class="seg" id="lk">${['Text','Call','Met','Tasting','Email'].map((k,i)=>`<button type="button" data-k="${k}" aria-pressed="${i===0}">${k}</button>`).join('')}</div>
+  <label class="f">What happened?<input type="text" id="ln" maxlength="200"></label>
+  <label class="f">Next step<input type="text" id="lnext" maxlength="160" value="${esc(l.next)}"></label>
+  <label class="f">When<input type="date" id="ld" value="${(()=>{const d=new Date();d.setDate(d.getDate()+2);return d.toISOString().slice(0,10)})()}"></label>
+  <button class="btn" id="lsave">Save touch (+1 φόρα)</button></div>
+  <div class="row"><button class="btn ghost small" id="ledit">Edit</button>${l.contact&&/^[+\d\s()-]{7,}$/.test(l.contact)?`<a class="btn ghost small" href="sms:${esc(l.contact.replace(/[^\d+]/g,''))}">Text</a>`:''}</div>
+  ${(l.touches||[]).length?`<h3 class="sub-title">History</h3>${l.touches.slice().reverse().map(t=>`<div class="insight"><span class="xs muted">${fmtDate(t.date)} · ${esc(t.kind)}</span><p class="small">${esc(t.note)}</p></div>`).join('')}`:''}`);
+  let kind='Text';const bd=$('#sheetBody');
+  bd.querySelectorAll('[data-k]').forEach(x=>x.addEventListener('click',()=>{kind=x.dataset.k;bd.querySelectorAll('[data-k]').forEach(y=>y.setAttribute('aria-pressed',y===x))}));
+  bd.querySelectorAll('[data-st]').forEach(x=>x.addEventListener('click',()=>{if(l.stage===x.dataset.st)return;l.stage=x.dataset.st;save();stageEntry(l);bd.querySelectorAll('[data-st]').forEach(y=>y.setAttribute('aria-pressed',y===x))}));
+  $('#ledit').addEventListener('click',()=>editLead(id));
+  $('#lsave').addEventListener('click',()=>{l.touches=l.touches||[];l.touches.push({date:today(),kind,note:$('#ln').value.trim()});l.next=$('#lnext').value.trim();l.nextDate=$('#ld').value;addEntry({title:kind+' with '+l.name,skill:'biz_sales',mode:'handson',points:1});toast('+1 φόρα');closeSheet()});
+}
+function logSale(){
+  openSheet('Log a sale',`<form class="form" id="sForm"><label class="f">Amount ($)<input type="number" name="amount" step="0.01" min="0" required inputmode="decimal"></label><label class="f">What sold<input type="text" name="items" maxlength="120" placeholder="2 waters, 1 cable"></label><button class="btn" type="submit">Save</button></form>`);
+  $('#sForm').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));S.sales.push({date:today(),biz:'ride',amount:+f.amount,items:f.items});addEntry({title:'Ride sale $'+(+f.amount).toFixed(2),skill:'biz_sales',mode:'tested',points:2});toast('+2 φόρα');closeSheet()});
+}
+function carCard(){
+  const kinds={OLIVE:'Curious about Greek olive oil? Text OLIVE for an invite to a free tasting.',TOUR:'Dreaming of Greece at harvest? Text TOUR for the one-page trip plan.'};
+  let k='OLIVE';
+  function draw(){const link='sms:'+S.sellPhone.replace(/[^\d+]/g,'')+'?&body='+k;let svg='';try{const q=qrcode(0,'M');q.addData(link);q.make();svg=q.createSvgTag({cellSize:5,margin:2,scalable:true})}catch(e){svg='<p class="small">QR unavailable.</p>'}
+    $('#sheetBody').innerHTML=`<div class="seg">${Object.keys(kinds).map(x=>`<button type="button" data-ck="${x}" aria-pressed="${x===k}">${x}</button>`).join('')}</div>
+    <label class="f">Your number<input type="tel" id="cph" value="${esc(S.sellPhone)}"></label>
+    <div class="car-card" id="carPrint"><div class="cc-qr">${svg}</div><div><p class="cc-t">${esc(kinds[k])}</p><p class="cc-s">Text <b>${k}</b> to ${esc(S.sellPhone)}</p><p class="cc-f">For products and events only. All rides go through the Uber app.</p></div></div>
+    <button class="btn" id="cprint">Print card</button><p class="note">Riders opt in by texting you, so there’s no pitch. Add them as leads when they text.</p>`;
+    $('#sheetBody').querySelectorAll('[data-ck]').forEach(x=>x.addEventListener('click',()=>{k=x.dataset.ck;draw()}));
+    $('#cph').addEventListener('change',e=>{S.sellPhone=e.target.value.trim()||S.sellPhone;save();draw()});
+    $('#cprint').addEventListener('click',()=>{document.body.classList.add('printing-card');window.print();setTimeout(()=>document.body.classList.remove('printing-card'),500)});}
+  openSheet('Car card','');draw();
+}
+function bindSell(v){
+  v.querySelectorAll('[data-biz]').forEach(b=>b.addEventListener('click',()=>{bizTab=b.dataset.biz;render()}));
+  v.querySelectorAll('[data-lead]').forEach(b=>b.addEventListener('click',()=>openLead(b.dataset.lead)));
+  v.querySelectorAll('[data-newlead]').forEach(b=>b.addEventListener('click',()=>editLead(null)));
+  v.querySelectorAll('[data-sale]').forEach(b=>b.addEventListener('click',logSale));
+  v.querySelectorAll('[data-carcard]').forEach(b=>b.addEventListener('click',carCard));
+  v.querySelectorAll('[data-bstep]').forEach(b=>b.addEventListener('click',()=>{stepDone(bizTab,+b.dataset.bstep);render()}));
+  v.querySelectorAll('[data-bstepchk]').forEach(c=>c.addEventListener('change',()=>{const i=+c.dataset.bstepchk;if(c.checked)stepDone(bizTab,i);else{delete S.bizSteps[bizTab][i];save()}render()}));
+  v.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(b.dataset.copy);toast('Copied')}catch(e){toast('Copy failed on this browser.')}}));
+}
+
+
+/* ---------- index-card methods ---------- */
+function cardState(){S.cardm=S.cardm||{};return S.cardm}
+function cardOfDay(){const st=cardState();const t=CARD_METHODS.find(m=>st[m.id]&&st[m.id].date===today());if(t)return {m:t,done:true};const n=CARD_METHODS.find(m=>!st[m.id]);return n?{m:n,done:false}:{m:CARD_METHODS[dayOfYear()%CARD_METHODS.length],done:false,all:true}}
+function openCard(id){
+  const m=CARD_METHODS.find(x=>x.id===id);const st=cardState()[id];const n=CARD_METHODS.indexOf(m)+1;
+  openSheet('Card '+n+' of '+CARD_METHODS.length+': '+m.name,`<div class="stack">
+  <div class="row" style="align-items:center;gap:var(--space-3)">${cardIcon(m,72)}<div><p class="eyebrow">${esc(m.who)}</p><p><b>${esc(m.tag)}</b></p></div></div>
+  <p>${esc(m.what)}</p>
+  <h4>Best practices</h4><ul class="tight">${m.how.map(h=>`<li>${esc(h)}</li>`).join('')}</ul>
+  <div class="card up-next"><span class="eyebrow">Try it today · about 15 minutes</span><p>${esc(m.tryToday)}</p><p class="small muted">You need: ${esc(m.mats)}</p></div>
+  <p class="small"><b>Common mistake:</b> ${esc(m.pitfall)}</p>
+  <p class="small">Read more: ${m.links.map(l=>`<a href="${l.u}" target="_blank" rel="noopener">${esc(l.t)}</a>`).join(' · ')}</p>
+  ${st?`<p class="note">Tried ${esc(fmtDate(st.date))} · ${'★'.repeat(st.rating||0)}${st.notes?' · “'+esc(st.notes)+'”':''}</p>`:''}
+  <form class="form" id="cmForm"><label class="f">How did it go? Keep it, tweak it, or drop it?<textarea name="notes" rows="3">${esc(st&&st.notes)}</textarea></label>
+  <div class="row" role="radiogroup" aria-label="Rating">${[1,2,3,4,5].map(i=>`<label class="chip"><input type="radio" name="rating" value="${i}" ${st&&st.rating===i?'checked':''}> ${i}★</label>`).join('')}</div>
+  <button class="btn" type="submit">${st?'Update':'I tried it'}</button></form></div>`);
+  $('#cmForm').addEventListener('submit',ev=>{ev.preventDefault();const f=new FormData(ev.target);const first=!cardState()[id];
+    cardState()[id]={date:first?today():st.date,rating:+f.get('rating')||0,notes:(f.get('notes')||'').trim()};
+    if(first){addEntry({title:'Index cards: tried '+m.name,skill:'mind_cards',skill2:id==='nabokov'?'fic_draft':undefined,mode:'practice',points:2});toast('+2 φόρα · next method tomorrow')}else{save();toast('Saved')}
+    closeSheet();render()});
+}
+function openCardShelf(){const st=cardState();
+  openSheet('Index-card methods',`<p class="small muted">One a day, in order. Each takes about 15 minutes. Your ratings show which to keep.</p>
+  <div class="shelf">${CARD_METHODS.map((m,i)=>`<button class="shelf-item" data-cm="${m.id}">${cardIcon(m,48)}<span><b>${i+1}. ${esc(m.name)}</b><span class="xs muted">${st[m.id]?'Tried · '+'★'.repeat(st[m.id].rating||0):esc(m.tag)}</span></span></button>`).join('')}</div>`);
+  $('#sheetBody').querySelectorAll('[data-cm]').forEach(b=>b.addEventListener('click',()=>openCard(b.dataset.cm)));
+}
 /* ---------- bind ---------- */
 function bindView(){
-  const v=$('#view');bindWrite(v);
-  v.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>({think:openThink,feel:()=>openFeel(),inv:openInv,read:openRead})[b.dataset.open]()));
+  const v=$('#view');bindWrite(v);bindSell(v);
+  v.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>({think:openThink,feel:()=>openFeel(),inv:openInv,read:openRead,card:()=>openCard(cardOfDay().m.id),shelf:openCardShelf})[b.dataset.open]()));
   v.querySelectorAll('[data-gotab]').forEach(b=>b.addEventListener('click',()=>{document.querySelector(`.tabs [data-tab=${b.dataset.gotab}]`).click()}));
   v.querySelectorAll('[data-skill]').forEach(b=>b.addEventListener('click',()=>openSkill(b.dataset.skill)));
   v.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{logFilter=b.dataset.filter;render()}));
@@ -564,7 +688,7 @@ function bindView(){
   v.querySelectorAll('[data-quick]').forEach(x=>x.addEventListener('click',()=>quickLog(x.dataset.quick,x.dataset.mode,x.dataset.title)));
   const af=$('#addForm');if(af)af.addEventListener('submit',ev=>{ev.preventDefault();const f=new FormData(af);const e={title:f.get('title'),skill:f.get('skill'),mode:f.get('mode'),diff:+f.get('diff')};addEntry(e);toast(`+${pts(e)} φόρα`);render()});
   const ex=$('#exportBtn');if(ex)ex.addEventListener('click',()=>{const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='skill-tree-backup-'+today()+'.json';document.body.appendChild(a);a.click();a.remove();toast('Backup saved')});
-  const im=$('#importFile');if(im)im.addEventListener('change',async()=>{try{const d=JSON.parse(await im.files[0].text());if(!Array.isArray(d.entries))throw 0;S=Object.assign({entries:[],think:[],feelings:[],inventory:[],stars:{},focusTarget:10,chars:[],people:[],books:[],writing:[],drafts:[],blockHits:{}},d);save();renderHeader();render();toast('Backup restored')}catch(e){toast('That file is not a Skill Tree backup.')}});
+  const im=$('#importFile');if(im)im.addEventListener('change',async()=>{try{const d=JSON.parse(await im.files[0].text());if(!Array.isArray(d.entries))throw 0;S=Object.assign({entries:[],think:[],feelings:[],inventory:[],stars:{},focusTarget:10,chars:[],people:[],books:[],writing:[],drafts:[],blockHits:{},leads:[],sales:[],bizSteps:{},cardm:{},sellPhone:'+18033990665'},d);save();renderHeader();render();toast('Backup restored')}catch(e){toast('That file is not a Skill Tree backup.')}});
 }
 renderHeader();render();
 })();

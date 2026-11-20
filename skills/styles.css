@@ -164,3 +164,21 @@ footer.foot{max-width:960px;margin:0 auto;padding:0 var(--space-5) var(--space-1
 .char-dl dd{margin:0;font-size:var(--text-sm)}
 .ul{margin:var(--space-2) 0 0;padding-left:1.2em;display:grid;gap:var(--space-1);font-size:var(--text-sm)}
 .blocks .feel{min-height:56px}
+
+.lead-row{width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--divider);font:inherit;color:inherit;cursor:pointer}
+.step-row{cursor:pointer}
+.step-row input,.lead-row input{margin-top:3px;accent-color:var(--olive);width:18px;height:18px;flex:none}
+.car-card{display:flex;gap:16px;align-items:center;border:2px solid var(--gold);border-radius:12px;padding:14px;background:#fffdf7;max-width:3.5in}
+.cc-qr{width:110px;flex:none}.cc-qr svg{width:100%;height:auto;display:block}
+.cc-t{font-family:var(--font-display);font-weight:600;font-size:15px;line-height:1.25;color:#2a2a1e}
+.cc-s{font-size:13px;margin-top:6px;color:#2a2a1e}.cc-f{font-size:10px;margin-top:6px;color:#6b6656}
+@media print{body.printing-card *{visibility:hidden}body.printing-card #carPrint,body.printing-card #carPrint *{visibility:visible}body.printing-card #carPrint{position:fixed;left:0;top:0}}
+.tabs{overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+
+.card-mini .card-ico{display:block;margin-bottom:6px}
+.shelf{display:grid;gap:8px;margin-top:12px}
+.shelf-item{display:flex;gap:12px;align-items:center;text-align:left;background:var(--surface,#fff);border:1px solid var(--divider);border-radius:10px;padding:8px 10px;font:inherit;color:inherit;cursor:pointer}
+.shelf-item>span{display:flex;flex-direction:column;gap:2px}
+.card-ico{flex:none}
+ul.tight{margin:0;padding-left:1.2em;display:grid;gap:4px}
+.chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--divider);border-radius:999px;padding:4px 10px;cursor:pointer;font-size:14px}

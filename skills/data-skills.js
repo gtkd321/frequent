@@ -26,7 +26,7 @@ window.BRANCHES=[
 {id:"spirit",name:"Orthodox spiritual life",occ:null,pay:null,payN:0,url:null,
  skills:[["sp_inventory","Daily inventory"],["sp_ladder","The Ladder"],["sp_warfare","Unseen Warfare"]]},
 {id:"mind",name:"Engineering mind",occ:null,pay:null,payN:0,url:null,
- skills:[["mind_dialectic","Think First reps"],["mind_read","Deep reading"],["mind_calib","Calibration"]]},
+ skills:[["mind_dialectic","Think First reps"],["mind_read","Deep reading"],["mind_calib","Calibration"],["mind_cards","Index-card thinking"]]},
 {id:"home",name:"Home operations",occ:null,pay:null,payN:0,url:null,
  skills:[["home_ops","Systems & routines"]]}
 ];
