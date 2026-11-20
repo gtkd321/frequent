@@ -52,7 +52,7 @@ function viewToday(){
   <article class="card up-next"><span class="eyebrow">Up next${doneToday[next]?' · done today':''}</span><h3>${P[next].t}</h3><p class="muted">${P[next].d}</p><div class="row" style="margin-top:var(--space-4)"><button class="btn" data-open="${P[next].fn}">${P[next].btn}</button></div></article>
   <div class="stats"><div class="stat"><b>${weekPts()}</b><span>φόρα this week</span></div><div class="stat"><b>${touched}/72</b><span>feelings touched</span></div><div class="stat"><b>${S.inventory.length}</b><span>inventories</span></div></div>
   ${warmCard()}
-  <div class="practice-row">${jobMini()}${moveMini()}${treatMini()}${others.map(k=>`<button class="mini" data-open="${P[k].fn}"><span class="eyebrow">${doneToday[k]?'Done today':'Also today'}</span><h4>${P[k].t}</h4><p>${P[k].d}</p></button>`).join('')}
+  <div class="practice-row">${unMini()}${shopMini()}${jobMini()}${moveMini()}${treatMini()}${others.map(k=>`<button class="mini" data-open="${P[k].fn}"><span class="eyebrow">${doneToday[k]?'Done today':'Also today'}</span><h4>${P[k].t}</h4><p>${P[k].d}</p></button>`).join('')}
   ${(()=>{const sc=S.chars&&S.chars.length?staleChar():null;return `<button class="mini" data-gotab="write"><span class="eyebrow">Fiction</span><h4>${sc?'How is '+esc(sc.name)+' doing?':'Back to your story'}</h4><p>${sc?'A two-question check-in with your character.':'Add your first character and log a session.'}</p></button>`})()}
   ${(()=>{lifeInit();const d=S.promises.filter(p=>p.kind==='daily');const k=d.filter(p=>((p.log||{})[today()]||0)>=p.clips).length;return `<button class="mini" data-gotab="life"><span class="eyebrow">Life · ${d.length?k+' of '+d.length+' promises kept':'promises to self'}</span><h4>${S.clip.goal?'Trade up: '+esc(clipNow()):'The paper clip game'}</h4><p>${S.clip.goal?'Offer it to someone today.':'Trade one red paper clip up, one person at a time.'}</p></button>`})()}
   ${(()=>{const c=cardOfDay();const n=Object.keys(cardState()).length;return `<button class="mini card-mini" data-open="card">${cardIcon(c.m,44)}<span class="eyebrow">Index cards · ${c.done?'done today':n+' of '+CARD_METHODS.length+' tried'}</span><h4>${c.done?'Tomorrow: next method':esc(c.m.name)}</h4><p>${c.done?'You tried '+esc(c.m.name)+'. Tap to add notes.':esc(c.m.tag)}</p></button>`})()}
@@ -64,12 +64,13 @@ function viewToday(){
 /* ---------- tree ---------- */
 function viewTree(){
   const {p,gate}=skillPoints();
+  const fogM={};fogList().forEach(f=>fogM[f.b.id]=f.days);
   const order=BRANCHES.slice().sort((a,b)=>b.skills.reduce((s,[id])=>s+(p[id]||0),0)-a.skills.reduce((s,[id])=>s+(p[id]||0),0));
   return `<h1 class="section-title">Your skill tree</h1>
   <p class="lede">Levels follow Greekquent’s olive path: Seed, Sapling, Tree, Harvest, Lamp. Work skills stop at Tree until you log a hands-on rep, something you did yourself without AI, or a test with real people.</p>
   <div class="grid2">${order.map(b=>{
     const bp=b.skills.reduce((s,[id])=>s+(p[id]||0),0);
-    return `<article class="card branch"><div class="branch-head"><h3>${esc(b.name)}</h3><span class="pts">${bp}</span></div>
+    return `<article class="card branch${fogM[b.id]!=null?' fogged':''}">${fogM[b.id]!=null?`<div class="fog"><span>The Nothing · ${fogM[b.id]} days</span><button class="btn small" data-nameit="${b.id}">Name it</button></div>`:''}<div class="branch-head"><h3>${esc(b.name)}</h3><span class="pts">${bp}</span></div>
     ${b.occ?`<a class="pay" href="${b.url}" target="_blank" rel="noopener">${esc(b.occ)}: ${b.pay} median (BLS)</a>`:'<span class="pay">Practice branch, measured by reps</span>'}
     <div class="nodes">${b.skills.map(([id,name])=>{
       const pt=p[id]||0;const gated=!PRACTICE_BRANCHES.has(b.id)&&!gate[id];const L=levelOf(pt,gated);
@@ -704,8 +705,10 @@ function viewLife(){lifeInit();
   return `<h1 class="section-title">Life</h1>
   <p class="lede">Promises to yourself and the person you’re growing into. Small, kept, every day.</p>
   <button class="identity" id="idEdit">${S.identity?`<span class="eyebrow">Who I’m becoming</span><span class="id-t">I am someone who ${esc(S.identity)}</span>`:'<span class="eyebrow">Who I’m becoming</span><span class="id-t muted">Finish the sentence: I am someone who…</span>'}</button>
+  ${unHtml()}
   <article class="card up-next">${game}</article>
   ${compactHtml()}
+  ${shopHtml()}
   <h2 class="sub-title">Daily promises</h2>
   <p class="small muted" style="margin-bottom:var(--space-3)">${esc(CLIP_JAR.what)} <a href="${CLIP_JAR.link.u}" target="_blank" rel="noopener">${esc(CLIP_JAR.link.t)}</a></p>
   ${daily.length?`<div class="grid2">${daily.map(p=>{const m=(p.log||{})[today()]||0;const full=m>=p.clips;return `<div class="card promise${full?' kept':''}"><div class="jars"><button class="jar-btn" data-clip="${p.id}" ${full?'disabled':''} aria-label="Move one clip for ${esc(p.text)}">${jarSvg(p.clips-m,'#8a8670')}<span class="xs">to go</span></button><span class="arr">→</span><span class="jar-btn">${jarSvg(m,'#b5523b')}<span class="xs">done</span></span></div><div class="p-body"><h4>${esc(p.text)}</h4><p class="xs muted">${full?'Kept today':m+' of '+p.clips+' today'} · ${promiseStreak(p)} day streak</p>${p.why?`<p class="small">${esc(p.why)}</p>`:''}<button class="linkish xs" data-pdel="${p.id}">Remove</button></div></div>`}).join('')}</div>`:`<div class="card"><p class="small">No daily promises yet. Start with the three minimums you already chose.</p><div class="row" style="margin-top:var(--space-3)"><button class="btn small" id="seedMins">Add chant, practice and workout</button></div></div>`}
@@ -903,10 +906,123 @@ function bindJobs(v){
   v.querySelectorAll('[data-jpref]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.jpref;S.jobPrefs=S.jobPrefs.includes(k)?S.jobPrefs.filter(x=>x!==k):S.jobPrefs.concat(k);save();render()}));
   v.querySelectorAll('[data-jstage]').forEach(s=>s.addEventListener('change',()=>{const j=S.jobs.find(x=>x.id===s.dataset.jstage);j.stage=s.value;if(['Interview','Offer','Started'].includes(s.value)){addEntry({title:s.value+': '+j.t,skill:'biz_career',mode:'handson',points:s.value==='Started'?5:3});toast('Nice. +φόρα')}else save();render()}));
   const f=$('#jAdd');if(f)f.addEventListener('submit',e=>{e.preventDefault();apply(f.t.value.trim(),f.w.value.trim()||'Lexington area',null)})}
+/* ---------- workshop ---------- */
+function shopInit(){S.shop=S.shop||{projects:[]};if(!S.shop.seeded){S.shop.seeded=true;S.shop.projects.push(shopNew(SHOP.studio,'shop_build'))}}
+function shopNew(t,skill){return {id:uid(),name:t.name||t.n,why:t.why||t.w||'',where:t.where||'',skill:skill||'shop_wood',steps:(t.steps||t.s).map(x=>({t:x,done:false})),sessions:[],created:today(),done:''}}
+function shopNext(p){return p.steps.find(s=>!s.done)}
+function shopActive(){shopInit();return S.shop.projects.filter(p=>!p.done)}
+function shopPct(p){return p.steps.length?Math.round(100*p.steps.filter(s=>s.done).length/p.steps.length):0}
+function shopMini(){const a=shopActive(),p=a[0];const done=S.entries.some(e=>e.date===today()&&/^Workshop/.test(e.title||''));
+  return `<button class="mini" data-open="shop"><span class="eyebrow">Workshop${done?' · done today':' · manual labor'}</span><h4>${p?esc(p.name):'Pick a project'}</h4><p>${p&&shopNext(p)?'Next: '+esc(shopNext(p).t):'Hands on wood. Something real gets finished.'}</p></button>`}
+function shopHtml(){shopInit();const a=shopActive(),fin=S.shop.projects.filter(p=>p.done);
+  return `<h2 class="sub-title">Workshop</h2><p class="small muted" style="margin-bottom:var(--space-3)">${esc(SHOP.note)} <a href="${SHOP.ladder[1]}" target="_blank" rel="noopener">${esc(SHOP.ladder[0])}</a></p>
+  <div class="grid2">${a.map(p=>{const n=shopNext(p);const mins=p.sessions.reduce((s,x)=>s+(+x.min||0),0);return `<button class="card shop-card" data-shop="${p.id}"><span class="eyebrow">${p.steps.filter(s=>s.done).length} of ${p.steps.length} steps · ${p.sessions.length} sessions · ${Math.round(mins/6)/10} h</span><h4>${esc(p.name)}</h4><span class="bar"><i style="width:${shopPct(p)}%"></i></span><p class="small">${n?'Next: '+esc(n.t):'All steps done. Mark it finished.'}</p>${p.where?`<p class="xs muted">Where it goes: ${esc(p.where)}</p>`:''}</button>`}).join('')}</div>
+  <div class="row" style="margin-top:var(--space-3)"><button class="btn ghost small" id="shopIdeas">+ Another project</button><button class="btn ghost small" id="shopLabor">Heavy day: just manual labor</button></div>
+  ${fin.length?`<p class="xs muted" style="margin-top:var(--space-2)">Finished: ${fin.map(p=>esc(p.name)+' ('+esc(fmtDate(p.done))+')').join(' · ')}</p>`:''}`}
+function openShop(id){shopInit();const p=S.shop.projects.find(x=>x.id===id)||shopActive()[0];if(!p){openShopIdeas();return}
+  const n=shopNext(p),isStudio=p.name===SHOP.studio.name;
+  openSheet(p.name,`<div class="stack">${p.why?`<p class="small muted">${esc(p.why)}</p>`:''}
+  ${n?`<article class="card up-next"><span class="eyebrow">Next step</span><h4>${esc(n.t)}</h4></article>`:'<p class="notice small">Every step is checked. Finish it.</p>'}
+  <form class="form" id="ssForm"><span class="small"><b>Log a session</b></span><div class="treat-pick">${[15,30,60,120].map((m,i)=>`<label class="chip-pick"><input type="radio" name="min" value="${m}"${i===1?' checked':''}> ${m<60?m+' min':m/60+' h'}</label>`).join('')}</div>
+  ${n?`<label class="chip-pick"><input type="checkbox" name="fin" checked> I finished "${esc(n.t.split(/[.:]/)[0])}"</label>`:''}
+  <label class="f">Note (optional)<input type="text" name="note" maxlength="140" placeholder="Squared two frames, one needs glue"></label><button class="btn" type="submit">Log it</button></form>
+  <details><summary class="small">All steps</summary><div>${p.steps.map((s,i)=>`<label class="step-row entry"><input type="checkbox" data-sstep="${i}"${s.done?' checked':''}><div class="small">${esc(s.t)}</div></label>`).join('')}</div></details>
+  ${isStudio?`<details open><summary class="small">The space question</summary><p class="small">${esc(SHOP.space)}</p><p class="small"><b>Where panels go, in order:</b></p><ol class="tight small">${SHOP.place.map(x=>`<li>${esc(x)}</li>`).join('')}</ol><p class="xs">${SHOP.placeSrc.map(x=>`<a href="${x[1]}" target="_blank" rel="noopener">${esc(x[0])}</a>`).join(' · ')}</p></details>
+  <details><summary class="small">Insulation safety</summary><ul class="tight small">${SHOP.safety.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><p class="xs">${SHOP.safetySrc.map(x=>`<a href="${x[1]}" target="_blank" rel="noopener">${esc(x[0])}</a>`).join(' · ')}</p></details>`:''}
+  ${p.sessions.length?`<details><summary class="small">Sessions</summary>${p.sessions.slice().reverse().map(x=>`<div class="xs">${esc(fmtDate(x.date))} · ${x.min} min${x.note?' · '+esc(x.note):''}</div>`).join('')}</details>`:''}
+  <div class="row"><button class="btn ghost small" id="ssEdit">Edit project</button>${!n?'<button class="btn small" id="ssDone">Finished (+5)</button>':''}</div></div>`);
+  $('#sheetBody').querySelectorAll('[data-sstep]').forEach(c=>c.addEventListener('change',()=>{p.steps[+c.dataset.sstep].done=c.checked;save()}));
+  $('#ssForm').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));const m=+f.min;let pt=m>=60?4:m>=30?3:2;
+    if(f.fin&&n){n.done=true;pt+=1}p.sessions.push({date:today(),min:m,note:f.note||'',step:f.fin&&n?n.t:''});
+    addEntry({title:'Workshop: '+p.name+(f.fin&&n?' · step done':'')+(f.note?' · '+f.note:''),skill:p.skill||'shop_build',skill2:'shop_labor',mode:'handson',points:pt});toast('+'+pt+' φόρα · hands-on');closeSheet()});
+  const e=$('#ssEdit');e&&e.addEventListener('click',()=>openShopEdit(p.id));
+  const d=$('#ssDone');d&&d.addEventListener('click',()=>{p.done=today();addEntry({title:'Workshop finished: '+p.name,skill:p.skill||'shop_build',mode:'handson',points:5});toast('Finished. +5 φόρα');closeSheet()})}
+function openShopEdit(id){const p=S.shop.projects.find(x=>x.id===id);const isNew=!p;const q=p||{name:'',why:'',where:'',skill:'shop_wood',steps:[]};
+  openSheet(isNew?'New project':'Edit project',`<form class="form" id="seForm"><label class="f">Project<input type="text" name="name" required maxlength="80" value="${esc(q.name)}"></label>
+  <label class="f">Why it matters<input type="text" name="why" maxlength="160" value="${esc(q.why)}"></label><label class="f">Where it goes (can wait)<input type="text" name="where" maxlength="100" value="${esc(q.where)}"></label>
+  <label class="f">Kind<select name="skill">${[['shop_build','Studio & home build'],['shop_wood','Woodworking']].map(([v,l])=>`<option value="${v}"${q.skill===v?' selected':''}>${l}</option>`).join('')}</select></label>
+  <label class="f">Steps, one per line<textarea name="steps" rows="8">${esc(q.steps.map(s=>s.t).join('\n'))}</textarea></label>
+  <button class="btn" type="submit">Save</button>${!isNew?'<button class="btn ghost small" type="button" id="seDel">Remove project</button>':''}</form>`);
+  $('#seForm').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));const lines=f.steps.split('\n').map(x=>x.trim()).filter(Boolean);
+    const old=p?p.steps:[];const steps=lines.map(t=>({t,done:!!(old.find(s=>s.t===t)||{}).done}));
+    if(p)Object.assign(p,{name:f.name,why:f.why,where:f.where,skill:f.skill,steps});else S.shop.projects.push(Object.assign(shopNew({name:f.name,why:f.why,where:f.where,steps:lines.length?lines:['First small step']},f.skill)));save();closeSheet()});
+  const dl=$('#seDel');dl&&dl.addEventListener('click',()=>{if(confirm('Remove '+p.name+'?')){S.shop.projects=S.shop.projects.filter(x=>x.id!==p.id);save();closeSheet()}})}
+function openShopIdeas(){shopInit();const have=new Set(S.shop.projects.map(p=>p.name));
+  openSheet('Another project',`<div class="stack"><p class="small muted">Small builds that serve your life. Add one; it gets its own steps you can edit.</p>${SHOP.ideas.map((x,i)=>`<article class="card"><h4>${esc(x.n)}</h4><p class="small">${esc(x.w)}</p><button class="btn ghost small" data-sidea="${i}"${have.has(x.n)?' disabled':''}>${have.has(x.n)?'Added':'Add this'}</button></article>`).join('')}<button class="btn" id="siOwn">My own project</button></div>`);
+  $('#sheetBody').querySelectorAll('[data-sidea]').forEach(b=>b.addEventListener('click',()=>{S.shop.projects.push(shopNew(SHOP.ideas[+b.dataset.sidea],'shop_wood'));save();toast('Added to the Workshop');openShopIdeas()}));
+  $('#siOwn').addEventListener('click',()=>openShopEdit(null))}
+function openLabor(){unInit();openSheet('Heavy day: manual labor',`<div class="stack"><p class="small">On a heavy day, shrink the ask. Do one of these with your hands. No thinking required.</p>
+  ${S.unstuck.moved?`<p class="notice small"><b>What got you moving last time:</b> ${esc(S.unstuck.moved)}</p>`:''}
+  ${SHOP.labor.map((x,i)=>`<button class="btn ghost" data-labor="${i}">${esc(x)}</button>`).join('')}<p class="xs"><a href="${SHOP.ladder[1]}" target="_blank" rel="noopener">${esc(SHOP.ladder[0])}</a></p></div>`);
+  $('#sheetBody').querySelectorAll('[data-labor]').forEach(b=>b.addEventListener('click',()=>{addEntry({title:'Manual labor: '+SHOP.labor[+b.dataset.labor],skill:'shop_labor',mode:'handson',points:1});toast('+1 φόρα. The fog pulls back.');closeSheet()}))}
+
+/* ---------- unstuck ---------- */
+function unInit(){S.unstuck=S.unstuck||{};const U=S.unstuck;['good','names','quiet','seen'].forEach(k=>U[k]=U[k]||[]);U.day=U.day||'';U.story=U.story||'';U.moved=U.moved||''}
+function branchLast(){const last={};allEntries().forEach(e=>[e.skill,e.skill2].forEach(s=>{const b=s&&BRANCH_OF[s];if(b&&(!last[b]||e.date>last[b]))last[b]=e.date}));return last}
+function fogList(){const last=branchLast();return BRANCHES.filter(b=>last[b.id]&&daysSince(last[b.id])>=UNSTUCK.fogDays).map(b=>({b,days:daysSince(last[b.id])})).sort((x,y)=>y.days-x.days)}
+function unTimer(id,secs,done){const el=$('#'+id);const end=Date.now()+secs*1000;const tick=()=>{const left=Math.max(0,Math.round((end-Date.now())/1000));const e=$('#'+id);if(!e){clearInterval(h);return}e.textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');if(left<=0){clearInterval(h);done()}};const h=setInterval(tick,500);tick();sheetCleanup=()=>clearInterval(h)}
+function unMini(){unInit();const U=S.unstuck,h=new Date().getHours(),fog=fogList();const goodT=U.good.some(g=>g.date===today());
+  if(h>=18&&!goodT)return `<button class="mini" data-open="good"><span class="eyebrow">Unstuck · tonight</span><h4>Three good things</h4><p>What went well today, and why it happened.</p></button>`;
+  if(fog.length)return `<button class="mini fog-mini" data-nameit="${fog[0].b.id}"><span class="eyebrow">The Nothing · ${fog.length} branch${fog.length===1?'':'es'} in fog</span><h4>Name it: ${esc(fog[0].b.name)}</h4><p>${fog[0].days} days untouched. One tiny action, 2 minutes.</p></button>`;
+  return `<button class="mini" data-open="seen"><span class="eyebrow">Unstuck · fight it directly</span><h4>Be seen once today</h4><p>Predict the judgment, do it anyway, check what happened.</p></button>`}
+function unHtml(){unInit();const U=S.unstuck,fog=fogList();const n=U.day?daysSince(U.day)+1:0;const ev=U.day?allEntries().filter(e=>e.date>=U.day).length:0;const qm=U.quiet.reduce((s,x)=>s+x.min,0);
+  const seenDone=U.seen.filter(x=>x.happened!=null);const better=seenDone.filter(x=>x.better).length;
+  return `<article class="card unstuck"><span class="eyebrow">${U.day?'Unstuck · day '+n+' · since '+esc(fmtDate(U.day)):'Unstuck'}</span>
+  ${U.day?`<h3>${U.story?'“'+esc(U.story)+'”':'You got unstuck.'}</h3>`:`<h3>Mark the day you got unstuck</h3><p class="muted small">${esc(UNSTUCK.note)}</p>`}
+  ${U.day?`<div class="stats"><div class="stat"><b>${ev}</b><span>reps since</span></div><div class="stat"><b>${U.good.length}</b><span>good-things nights</span></div><div class="stat"><b>${seenDone.length?better+'/'+seenDone.length:U.seen.length}</b><span>${seenDone.length?'went better than predicted':'times seen'}</span></div><div class="stat"><b>${qm}</b><span>quiet minutes</span></div></div>`:''}
+  <div class="row" style="margin-top:var(--space-3)">${U.day?'':'<button class="btn" data-un="day">Mark my Unstuck Day</button>'}<button class="btn${U.day?'':' ghost'}" data-un="seen">Be seen (+3)</button><button class="btn ghost" data-un="good">Three good things</button><button class="btn ghost" data-un="quiet">The Quiet</button><button class="btn ghost" data-un="name">Name it</button>${U.day?'<button class="btn ghost small" data-un="ev">Evidence</button><button class="btn ghost small" data-un="day">Edit</button>':''}</div>
+  ${fog.length?`<p class="small fog-line">The Nothing is over ${fog.slice(0,3).map(f=>`<button class="linkish" data-nameit="${f.b.id}">${esc(f.b.name)} (${f.days}d)</button>`).join(', ')}${fog.length>3?' and '+(fog.length-3)+' more':''}.</p>`:''}</article>`}
+function openUnDay(){unInit();const U=S.unstuck;openSheet('My Unstuck Day',`<form class="form" id="udForm"><p class="small muted">Bastian names the Empress and Fantasia comes back. Name your day.</p>
+  <label class="f">The day<input type="date" name="day" required value="${esc(U.day||today())}"></label>
+  <label class="f">What changed, in a sentence or two<textarea name="story" rows="3" maxlength="300">${esc(U.story)}</textarea></label>
+  <label class="f">What got me moving (my plan for the next foggy day)<textarea name="moved" rows="3" maxlength="300" placeholder="The 9 AM gym, small asks, people…">${esc(U.moved)}</textarea></label>
+  <button class="btn" type="submit">Save</button></form>`);
+  $('#udForm').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));const first=!U.day;Object.assign(U,f);if(first)addEntry({title:'Unstuck Day marked',skill:'life_unstuck',mode:'practice',points:3});toast(first?'Marked. +3 φόρα. Celebrate it.':'Saved');closeSheet()})}
+function openGood(){unInit();openSheet('Three good things',`<form class="form" id="gdForm"><p class="small">${esc(UNSTUCK.good)}</p>${[1,2,3].map(i=>`<label class="f">${i}. What went well<input type="text" name="t${i}" maxlength="140" ${i===1?'required':''}></label><label class="f xs">Why it happened<input type="text" name="w${i}" maxlength="160"></label>`).join('')}
+  <button class="btn" type="submit">Save (+2)</button><p class="xs"><a href="${UNSTUCK.goodSrc[1]}" target="_blank" rel="noopener">${esc(UNSTUCK.goodSrc[0])}</a></p></form>`);
+  $('#gdForm').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));const items=[1,2,3].map(i=>({t:f['t'+i].trim(),why:f['w'+i].trim()})).filter(x=>x.t);S.unstuck.good.push({date:today(),items});addEntry({title:'Three good things: '+items.map(x=>x.t).join('; '),skill:'life_unstuck',mode:'practice',points:2});toast('+2 φόρα');closeSheet()})}
+function openQuiet(){unInit();openSheet('The Quiet',`<div class="stack"><p class="small">${esc(UNSTUCK.quiet)}</p><div class="treat-pick">${[5,10,20].map((m,i)=>`<label class="chip-pick"><input type="radio" name="qm" value="${m}"${i===1?' checked':''}> ${m} min</label>`).join('')}</div>
+  <div class="big-timer" id="qT">10:00</div><button class="btn" id="qGo">Begin the Quiet</button><p class="xs"><a href="${UNSTUCK.quietSrc[1]}" target="_blank" rel="noopener">${esc(UNSTUCK.quietSrc[0])}</a></p></div>`);
+  const sync=()=>{const m=+document.querySelector('input[name=qm]:checked').value;$('#qT').textContent=m+':00'};document.querySelectorAll('input[name=qm]').forEach(x=>x.addEventListener('change',sync));
+  $('#qGo').addEventListener('click',()=>{const m=+document.querySelector('input[name=qm]:checked').value;$('#qGo').disabled=true;$('#qGo').textContent='Phone away. Nothing to do.';
+    unTimer('qT',m*60,()=>{S.unstuck.quiet.push({date:today(),min:m});addEntry({title:'The Quiet: '+m+' min',skill:'mind_attn',mode:'practice',points:m>=10?2:1});toast('Done. Attention grows in the quiet.');try{navigator.vibrate&&navigator.vibrate(300)}catch(e){};$('#qGo').textContent='Done'})})}
+function openNameIt(bid){unInit();const fog=fogList();const b=BRANCHES.find(x=>x.id===bid)||(fog[0]&&fog[0].b)||BRANCHES[0];
+  openSheet('Name it',`<div class="stack"><p class="small">${esc(UNSTUCK.name)}</p>
+  <label class="f">Branch<select id="niB">${BRANCHES.map(x=>`<option value="${x.id}"${x.id===b.id?' selected':''}>${esc(x.name)}${fog.some(f=>f.b.id===x.id)?' · in fog':''}</option>`).join('')}</select></label>
+  <label class="f">One tiny action, said out loud<input type="text" id="niT" maxlength="120" placeholder="Open the file and read one paragraph"></label>
+  <div class="big-timer" id="niTm">2:00</div><button class="btn" id="niGo">Name it and start 2 minutes</button><button class="btn ghost small" id="niNow">Already did it</button>
+  <details><summary class="small">Heavy day?</summary><p class="small">Shrink it further, or just use your hands.</p><button class="btn ghost small" id="niLab">Manual labor list</button></details>
+  <p class="xs"><a href="${UNSTUCK.baSrc[1]}" target="_blank" rel="noopener">${esc(UNSTUCK.baSrc[0])}</a> · <a href="${UNSTUCK.gmork[1]}" target="_blank" rel="noopener">${esc(UNSTUCK.gmork[0])}</a></p></div>`);
+  const log=()=>{const t=$('#niT').value.trim()||'one tiny action';const br=BRANCHES.find(x=>x.id===$('#niB').value);S.unstuck.names.push({date:today(),t,b:br.id});addEntry({title:'Named it: '+t,skill:br.skills[0][0],mode:'practice',points:1});toast('+1 φόρα. The fog pulls back from '+br.name+'.');closeSheet()};
+  $('#niGo').addEventListener('click',()=>{if(!$('#niT').value.trim()){toast('Name it first.');return}$('#niGo').disabled=true;$('#niGo').textContent='Go';unTimer('niTm',120,()=>{$('#niGo').disabled=false;$('#niGo').textContent='Two minutes done. Log it (+1)';$('#niGo').onclick=log})});
+  $('#niNow').addEventListener('click',log);$('#niLab').addEventListener('click',openLabor)}
+function openSeen(){unInit();const U=S.unstuck,X=UNSTUCK.seen,open=U.seen.filter(x=>x.happened==null);
+  openSheet('Be seen',`<div class="stack"><p class="small">${esc(X.why)}</p>
+  ${open.map(x=>`<article class="card"><span class="eyebrow">Waiting for the result · ${esc(fmtDate(x.date))}</span><h4>${esc(x.act)}</h4><p class="small">You predicted: “${esc(x.pred)}” (${x.sure}% sure)</p><button class="btn small" data-seenres="${x.id}">What actually happened</button></article>`).join('')}
+  <form class="form" id="bsForm"><label class="f">The thing<input type="text" name="act" required maxlength="140" list="bsIdeas" placeholder="Send one job application without rewriting it"><datalist id="bsIdeas">${X.ideas.map(i=>`<option value="${esc(i)}">`).join('')}</datalist></label>
+  <label class="f">Exactly what will happen<input type="text" name="pred" required maxlength="160" placeholder="They won't reply, or they'll think less of me"></label>
+  <label class="f">How sure, 0 to 100 <input type="range" name="sure" min="0" max="100" step="10" value="70"></label>
+  <label class="f">The hiding move I'll drop<input type="text" name="drop" maxlength="120" placeholder="Over-preparing, apologizing first, not sending"></label>
+  <button class="btn" type="submit">I'm going to do it</button></form>
+  <details><summary class="small">How this works</summary><ol class="tight small">${X.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol><p class="xs">${X.src.map(x=>`<a href="${x[1]}" target="_blank" rel="noopener">${esc(x[0])}</a>`).join(' · ')}</p><p class="xs muted">${esc(X.care)}</p></details>
+  ${U.seen.filter(x=>x.happened!=null).length?`<details><summary class="small">Past experiments</summary>${U.seen.filter(x=>x.happened!=null).slice().reverse().map(x=>`<div class="entry"><div><div class="entry-title">${esc(x.act)}</div><div class="xs">Predicted: ${esc(x.pred)} · Happened: ${esc(x.happened)}${x.learn?' · Learned: '+esc(x.learn):''}</div></div></div>`).join('')}</details>`:''}</div>`);
+  $('#bsForm').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));U.seen.push({id:uid(),date:today(),act:f.act,pred:f.pred,sure:+f.sure,drop:f.drop,happened:null});save();toast('Go. Watch them, not yourself.');closeSheet()});
+  $('#sheetBody').querySelectorAll('[data-seenres]').forEach(b=>b.addEventListener('click',()=>openSeenRes(b.dataset.seenres)))}
+function openSeenRes(id){const x=S.unstuck.seen.find(s=>s.id===id);openSheet('What actually happened',`<form class="form" id="srForm"><p class="small">You did: <b>${esc(x.act)}</b><br>You predicted: “${esc(x.pred)}” (${x.sure}% sure)</p>
+  <label class="f">What actually happened<input type="text" name="happened" required maxlength="200"></label>
+  <label class="chip-pick"><input type="checkbox" name="better" checked> It went better than I predicted</label>
+  <label class="f">What I learned<input type="text" name="learn" maxlength="200"></label><button class="btn" type="submit">Save (+3)</button></form>`);
+  $('#srForm').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));Object.assign(x,{happened:f.happened,better:!!f.better,learn:f.learn,done:today()});addEntry({title:'Be seen: '+x.act,skill:'life_unstuck',mode:'tested',points:3});toast('+3 φόρα. That is the Nothing losing ground.');closeSheet()})}
+function openEvidence(){unInit();const U=S.unstuck;const list=allEntries().filter(e=>e.date>=U.day).sort((a,b)=>b.date.localeCompare(a.date));
+  openSheet('Evidence since '+fmtDate(U.day),`<div class="stack"><p class="small">The Nothing says nothing matters. This is what you did.</p>${U.moved?`<p class="notice small"><b>What got you moving:</b> ${esc(U.moved)}</p>`:''}<div>${list.slice(0,80).map(entryRow).join('')}</div></div>`)}
+function bindUnstuck(v){v.querySelectorAll('[data-un]').forEach(b=>b.addEventListener('click',()=>({day:openUnDay,good:openGood,quiet:openQuiet,name:()=>openNameIt(),seen:openSeen,ev:openEvidence})[b.dataset.un]()));
+  v.querySelectorAll('[data-nameit]').forEach(b=>b.addEventListener('click',ev=>{ev.stopPropagation();openNameIt(b.dataset.nameit)}));
+  v.querySelectorAll('[data-shop]').forEach(b=>b.addEventListener('click',()=>openShop(b.dataset.shop)));
+  const i=v.querySelector('#shopIdeas');i&&i.addEventListener('click',openShopIdeas);const l=v.querySelector('#shopLabor');l&&l.addEventListener('click',openLabor)}
 /* ---------- bind ---------- */
 function bindView(){
-  const v=$('#view');bindWrite(v);bindSell(v);bindJobs(v);bindLife(v);bindCompact(v);
-  v.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>({think:openThink,feel:()=>openFeel(),inv:openInv,read:openRead,warm:openWarm,move:openMove,treat:openTreat,card:()=>openCard(cardOfDay().m.id),shelf:openCardShelf})[b.dataset.open]()));
+  const v=$('#view');bindWrite(v);bindSell(v);bindJobs(v);bindLife(v);bindCompact(v);bindUnstuck(v);
+  v.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>({think:openThink,feel:()=>openFeel(),inv:openInv,read:openRead,warm:openWarm,move:openMove,treat:openTreat,shop:()=>openShop(),good:openGood,seen:openSeen,card:()=>openCard(cardOfDay().m.id),shelf:openCardShelf})[b.dataset.open]()));
   v.querySelectorAll('[data-gotab]').forEach(b=>b.addEventListener('click',()=>{document.querySelector(`.tabs [data-tab=${b.dataset.gotab}]`).click()}));
   v.querySelectorAll('[data-skill]').forEach(b=>b.addEventListener('click',()=>openSkill(b.dataset.skill)));
   v.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{logFilter=b.dataset.filter;render()}));
@@ -915,7 +1031,7 @@ function bindView(){
   v.querySelectorAll('[data-quick]').forEach(x=>x.addEventListener('click',()=>quickLog(x.dataset.quick,x.dataset.mode,x.dataset.title)));
   const af=$('#addForm');if(af)af.addEventListener('submit',ev=>{ev.preventDefault();const f=new FormData(af);const e={title:f.get('title'),skill:f.get('skill'),mode:f.get('mode'),diff:+f.get('diff')};addEntry(e);toast(`+${pts(e)} φόρα`);render()});
   const ex=$('#exportBtn');if(ex)ex.addEventListener('click',()=>{const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='skill-tree-backup-'+today()+'.json';document.body.appendChild(a);a.click();a.remove();toast('Backup saved')});
-  const im=$('#importFile');if(im)im.addEventListener('change',async()=>{try{const d=JSON.parse(await im.files[0].text());if(!Array.isArray(d.entries))throw 0;S=Object.assign({entries:[],think:[],feelings:[],inventory:[],stars:{},focusTarget:10,chars:[],people:[],books:[],writing:[],drafts:[],blockHits:{},leads:[],sales:[],bizSteps:{},cardm:{},promises:[],clip:{goal:'',trades:[],offers:[]},identity:'',shelf:[],compacts:[],run:{week:0,logs:[]},treats:{cur:null,log:[],claimed:[]},jobs:[],jobPrefs:['q','c','p'],sellPhone:'+18033990665'},d);save();renderHeader();render();toast('Backup restored')}catch(e){toast('That file is not a Skill Tree backup.')}});
+  const im=$('#importFile');if(im)im.addEventListener('change',async()=>{try{const d=JSON.parse(await im.files[0].text());if(!Array.isArray(d.entries))throw 0;S=Object.assign({entries:[],think:[],feelings:[],inventory:[],stars:{},focusTarget:10,chars:[],people:[],books:[],writing:[],drafts:[],blockHits:{},leads:[],sales:[],bizSteps:{},cardm:{},promises:[],clip:{goal:'',trades:[],offers:[]},identity:'',shelf:[],compacts:[],run:{week:0,logs:[]},treats:{cur:null,log:[],claimed:[]},jobs:[],jobPrefs:['q','c','p'],shop:{projects:[],seeded:true},unstuck:{},sellPhone:'+18033990665'},d);save();renderHeader();render();toast('Backup restored')}catch(e){toast('That file is not a Skill Tree backup.')}});
 }
 renderHeader();render();
 })();
