@@ -239,3 +239,4 @@ ul.tight{margin:0;padding-left:1.2em;display:grid;gap:4px}
 .fog-mini{background:linear-gradient(135deg,var(--surface),rgba(140,140,140,.18))}
 .big-timer{font-family:var(--font-display);font-size:3rem;text-align:center;font-variant-numeric:tabular-nums}
 .fog-line .linkish{color:var(--olive);font:inherit;margin:0}
+.f[hidden]{display:none}

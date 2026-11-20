@@ -52,7 +52,7 @@ function viewToday(){
   <article class="card up-next"><span class="eyebrow">Up next${doneToday[next]?' · done today':''}</span><h3>${P[next].t}</h3><p class="muted">${P[next].d}</p><div class="row" style="margin-top:var(--space-4)"><button class="btn" data-open="${P[next].fn}">${P[next].btn}</button></div></article>
   <div class="stats"><div class="stat"><b>${weekPts()}</b><span>φόρα this week</span></div><div class="stat"><b>${touched}/72</b><span>feelings touched</span></div><div class="stat"><b>${S.inventory.length}</b><span>inventories</span></div></div>
   ${warmCard()}
-  <div class="practice-row">${unMini()}${moneyMini()}${shopMini()}${jobMini()}${moveMini()}${treatMini()}${others.map(k=>`<button class="mini" data-open="${P[k].fn}"><span class="eyebrow">${doneToday[k]?'Done today':'Also today'}</span><h4>${P[k].t}</h4><p>${P[k].d}</p></button>`).join('')}
+  <div class="practice-row">${hallMini()}${unMini()}${moneyMini()}${shopMini()}${jobMini()}${moveMini()}${treatMini()}${others.map(k=>`<button class="mini" data-open="${P[k].fn}"><span class="eyebrow">${doneToday[k]?'Done today':'Also today'}</span><h4>${P[k].t}</h4><p>${P[k].d}</p></button>`).join('')}
   ${(()=>{const sc=S.chars&&S.chars.length?staleChar():null;return `<button class="mini" data-gotab="write"><span class="eyebrow">Fiction</span><h4>${sc?'How is '+esc(sc.name)+' doing?':'Back to your story'}</h4><p>${sc?'A two-question check-in with your character.':'Add your first character and log a session.'}</p></button>`})()}
   ${(()=>{lifeInit();const d=S.promises.filter(p=>p.kind==='daily');const k=d.filter(p=>((p.log||{})[today()]||0)>=p.clips).length;return `<button class="mini" data-gotab="life"><span class="eyebrow">Life · ${d.length?k+' of '+d.length+' promises kept':'promises to self'}</span><h4>${S.clip.goal?'Trade up: '+esc(clipNow()):'The paper clip game'}</h4><p>${S.clip.goal?'Offer it to someone today.':'Trade one red paper clip up, one person at a time.'}</p></button>`})()}
   ${(()=>{const c=cardOfDay();const n=Object.keys(cardState()).length;return `<button class="mini card-mini" data-open="card">${cardIcon(c.m,44)}<span class="eyebrow">Index cards · ${c.done?'done today':n+' of '+CARD_METHODS.length+' tried'}</span><h4>${c.done?'Tomorrow: next method':esc(c.m.name)}</h4><p>${c.done?'You tried '+esc(c.m.name)+'. Tap to add notes.':esc(c.m.tag)}</p></button>`})()}
@@ -706,6 +706,7 @@ function viewLife(){lifeInit();
   <p class="lede">Promises to yourself and the person you’re growing into. Small, kept, every day.</p>
   <button class="identity" id="idEdit">${S.identity?`<span class="eyebrow">Who I’m becoming</span><span class="id-t">I am someone who ${esc(S.identity)}</span>`:'<span class="eyebrow">Who I’m becoming</span><span class="id-t muted">Finish the sentence: I am someone who…</span>'}</button>
   ${unHtml()}
+  ${hallHtml()}
   ${moneyHtml()}
   <article class="card up-next">${game}</article>
   ${compactHtml()}
@@ -1090,10 +1091,67 @@ function openMoneySet(){const M=mnInit();openSheet('Kitchen & money settings',`<
   <label class="f">Prep day<select name="day">${MONEY.days.map((d,i)=>`<option value="${i}"${i===M.day?' selected':''}>${d}</option>`).join('')}</select></label><label class="f">Emergency fund goal (3 to 6 months of basic costs)<input type="number" name="goal" min="500" step="100" value="${M.goal}"></label><button class="btn" type="submit">Save</button></form>`);
   $('#msForm').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));M.out=+f.out;M.home=+f.home;M.day=+f.day;M.goal=Math.max(500,+f.goal||500);save();closeSheet();render()})}
 function bindMoney(v){v.querySelectorAll('[data-mn]').forEach(b=>b.addEventListener('click',()=>({prep:openPrep,pay:openPay,ate:openAte,moves:openMoves,out:openMealOut,set:openMoneySet})[b.dataset.mn]()))}
+/* ---------- study hall ---------- */
+const HALL={script:['Flip the Timeular to Study hall.','Book, pencil and one index card on the desk.','Write the date and your start page on the card.','Tap Start, join the call. The phone stays on the call until the end.'],
+ during:['Read on paper. The call is your only screen.','End of each chapter, or every 10 pages: one line on the card.','A student arrives: write the page on the card, card in the book, book closed. They get all of you.','They leave: open the book at the card and keep going.'],
+ why:'Showing up is the job, even when no one comes. The card holds your place so a student never costs you the book.',
+ src:[['Writing down where you stopped reduces attention residue (Leroy and Glomb 2018)','https://www.thewhyweproject.com/people/sophie-leroy'],['Autistic adults describe outside structure and prompts as what gets them moving (Buckle et al. 2021)','https://pmc.ncbi.nlm.nih.gov/articles/PMC8314008/']]};
+function hlInit(){S.hall=S.hall||{};const H=S.hall;H.sessions=H.sessions||[];H.days=H.days||[];if(H.meet==null)H.meet='';if(H.time==null)H.time='';return H}
+function hlBooks(){return (S.books||[]).filter(b=>(b.status||'Reading')==='Reading')}
+function hlBook(id){return (S.books||[]).find(b=>b.id===id)}
+function hlLastPage(id){const s=hlInit().sessions.filter(x=>x.book===id&&x.p1).slice(-1)[0];return s?s.p1:''}
+function hlToday(){return hlInit().days.includes(new Date().getDay())}
+function hlStats(){const H=hlInit(),s=H.sessions;return {n:s.length,came:s.filter(x=>x.students>0).length,pages:s.reduce((a,x)=>a+Math.max(0,(+x.p1||0)-(+x.p0||0)),0),min:s.reduce((a,x)=>a+(+x.min||0),0)}}
+function hlClock(ts){const d=new Date(ts);return d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}
+function hallMini(){const H=hlInit();if(H.cur)return `<button class="mini" data-open="hall"><span class="eyebrow">Study hall · in progress</span><h4>Back from the call?</h4><p>Started ${esc(hlClock(H.cur.start))}. Log the page you reached.</p></button>`;
+  if(!hlToday())return '';const done=H.sessions.some(x=>x.date===today());const b=hlBook(H.book);
+  return `<button class="mini" data-open="hall"><span class="eyebrow">Study hall${H.time?' · '+esc(H.time):''}${done?' · showed up':''}</span><h4>${done?'You showed up':'Show up, then read'}</h4><p>${done?'Logged.':b?esc(b.title)+(hlLastPage(b.id)?', from page '+esc(hlLastPage(b.id)):''):'Pick the book you’ll read on the call.'}</p></button>`}
+function hallHtml(){const H=hlInit(),st=hlStats(),b=hlBook(H.book);
+  return `<h2 class="sub-title">Study hall</h2><p class="small muted" style="margin-bottom:var(--space-3)">${esc(HALL.why)}</p>
+  <div class="stats"><div class="stat"><b>${st.n}</b><span>times showed up</span></div><div class="stat"><b>${st.pages}</b><span>pages read on the call</span></div><div class="stat"><b>${Math.round(st.min/6)/10}</b><span>hours held open</span></div></div>
+  <div class="row" style="margin-top:var(--space-3)"><button class="btn small" data-hl="go">${H.cur?'Finish study hall':'Start study hall'}</button><button class="btn ghost small" data-hl="set">Days and Meet link</button></div>
+  <p class="xs muted" style="margin-top:var(--space-2)">${H.days.length?esc(H.days.map(d=>MONEY.days[d].slice(0,3)).join(', '))+(H.time?' · '+esc(H.time):''):'No days set yet.'}${b?' · Reading: '+esc(b.title):''}${st.came?' · students came '+st.came+' time'+(st.came>1?'s':''):''}</p>`}
+function openHall(){const H=hlInit();if(H.cur){openHallEnd();return}if(!H.days.length&&!H.meet){openHallSet(true);return}
+  const bs=hlBooks();const sel=H.book&&hlBook(H.book)?H.book:(bs[0]||{}).id||'';
+  openSheet('Study hall',`<form class="form" id="hsForm"><p class="small muted">${esc(HALL.why)}</p>
+  <div class="card"><span class="eyebrow">Before</span><ol class="tight small">${HALL.script.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></div>
+  <div class="card"><span class="eyebrow">On the call, read once now</span><ol class="tight small">${HALL.during.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></div>
+  <label class="f">Book<select name="book">${bs.map(b=>`<option value="${b.id}"${b.id===sel?' selected':''}>${esc(b.title)}</option>`).join('')}<option value="__new"${bs.length?'':' selected'}>+ A new book</option></select></label>
+  <label class="f" id="hsNew"${bs.length?' hidden':''}>New book title<input type="text" name="nt" maxlength="120"></label>
+  <label class="f">Start page<input type="number" name="p0" min="0" value="${esc(String(hlLastPage(sel)||''))}"></label>
+  <button class="btn" type="submit">Start${H.meet?' and join the call':''}</button>
+  <p class="xs">${HALL.src.map(x=>`<a href="${x[1]}" target="_blank" rel="noopener">${esc(x[0])}</a>`).join(' · ')}</p></form>`);
+  const f=$('#hsForm');f.book.addEventListener('change',()=>{$('#hsNew').hidden=f.book.value!=='__new';if(f.book.value!=='__new')f.p0.value=hlLastPage(f.book.value)||''});
+  f.addEventListener('submit',ev=>{ev.preventDefault();let id=f.book.value;
+    if(id==='__new'){const t=f.nt.value.trim();if(!t){toast('Name the book first.');return}id=uid();S.books.push({id,title:t,author:'',status:'Reading',insights:[]})}
+    H.book=id;H.cur={start:Date.now(),date:today(),book:id,p0:+f.p0.value||0};save();closeSheet();render();
+    if(H.meet){const l=document.createElement('a');l.href=H.meet;l.target='_blank';l.rel='noopener';document.body.appendChild(l);l.click();l.remove()}})}
+function openHallEnd(){const H=hlInit(),c=H.cur,b=hlBook(c.book)||{title:'Book'};const min=Math.max(1,Math.round((Date.now()-c.start)/60000));
+  openSheet('Study hall: done',`<form class="form" id="heForm"><p class="small">Started ${esc(hlClock(c.start))}, about ${min} minute${min===1?'':'s'}. ${esc(b.title)}, from page ${c.p0||'?'}.</p>
+  <label class="f">Minutes on the call<input type="number" name="min" min="1" max="300" value="${Math.min(min,300)}"></label>
+  <label class="f">Page you reached<input type="number" name="p1" min="0" value=""></label>
+  <span class="small">Students who came</span><div class="treat-pick">${[0,1,2,3].map((n,i)=>`<label class="chip-pick"><input type="radio" name="st" value="${n}"${i===0?' checked':''}> ${n===3?'3+':n}</label>`).join('')}</div>
+  <label class="f">Best line from the card (saved as a book insight)<input type="text" name="line" maxlength="240"></label>
+  <label class="chip-pick"><input type="checkbox" name="fin"> I finished the book</label>
+  <button class="btn" type="submit">Log it</button><button class="btn ghost small" type="button" id="heX">Discard this session</button></form>`);
+  const f=$('#heForm');
+  $('#heX').addEventListener('click',()=>{delete H.cur;save();closeSheet();render()});
+  f.addEventListener('submit',ev=>{ev.preventDefault();const p1=+f.p1.value||0,st=+f.st.value,m=+f.min.value||min,line=f.line.value.trim();const pages=Math.max(0,p1-(c.p0||0));
+    H.sessions.push({date:c.date,start:c.start,min:m,book:c.book,p0:c.p0,p1,students:st,line});delete H.cur;
+    const bk=hlBook(c.book);if(bk){if(line){bk.insights=bk.insights||[];bk.insights.push({date:today(),text:line,use:'Study hall'})}if(f.fin.checked)bk.status='Finished'}
+    addEntry({title:'Study hall: showed up'+(st?' · '+(st===3?'3+':st)+' student'+(st===1?'':'s'):''),skill:'life_promise',skill2:'ld_motiv',mode:'directed',points:2});
+    const rp=pages>=30?3:pages>=10?2:pages>0||m>=20?1:0;if(rp)addEntry({title:'Read on the call: '+(bk?bk.title:'book')+(pages?' · '+pages+' pages':''),skill:'mind_read',mode:'read',points:rp});
+    toast('+'+(2+rp)+' φόρα · you showed up');closeSheet();render()})}
+function openHallSet(first){const H=hlInit();openSheet('Study hall setup',`<form class="form" id="hcForm">${first?'<p class="small">Set it once. After this, the card appears on Today on study hall days.</p>':''}
+  <label class="f">Google Meet link<input type="url" name="meet" placeholder="https://meet.google.com/..." value="${esc(H.meet)}"></label>
+  <span class="small">Days</span><div class="treat-pick">${MONEY.days.map((d,i)=>`<label class="chip-pick"><input type="checkbox" name="d" value="${i}"${H.days.includes(i)?' checked':''}> ${d.slice(0,3)}</label>`).join('')}</div>
+  <label class="f">Time (just a label)<input type="text" name="time" maxlength="20" placeholder="4:00 PM" value="${esc(H.time)}"></label><button class="btn" type="submit">Save</button></form>`);
+  $('#hcForm').addEventListener('submit',ev=>{ev.preventDefault();const fd=new FormData(ev.target);H.meet=(fd.get('meet')||'').trim();H.days=fd.getAll('d').map(Number);H.time=(fd.get('time')||'').trim();save();closeSheet();render();if(first)openHall()})}
+function bindHall(v){v.querySelectorAll('[data-hl]').forEach(b=>b.addEventListener('click',()=>({go:openHall,set:()=>openHallSet(false)})[b.dataset.hl]()))}
 /* ---------- bind ---------- */
 function bindView(){
-  const v=$('#view');bindWrite(v);bindSell(v);bindJobs(v);bindLife(v);bindCompact(v);bindUnstuck(v);bindMoney(v);
-  v.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>({think:openThink,feel:()=>openFeel(),inv:openInv,read:openRead,warm:openWarm,move:openMove,treat:openTreat,shop:()=>openShop(),money:openMoney,good:openGood,seen:openSeen,card:()=>openCard(cardOfDay().m.id),shelf:openCardShelf})[b.dataset.open]()));
+  const v=$('#view');bindWrite(v);bindSell(v);bindJobs(v);bindLife(v);bindCompact(v);bindUnstuck(v);bindMoney(v);bindHall(v);
+  v.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>({think:openThink,feel:()=>openFeel(),inv:openInv,read:openRead,warm:openWarm,move:openMove,treat:openTreat,shop:()=>openShop(),money:openMoney,hall:openHall,good:openGood,seen:openSeen,card:()=>openCard(cardOfDay().m.id),shelf:openCardShelf})[b.dataset.open]()));
   v.querySelectorAll('[data-gotab]').forEach(b=>b.addEventListener('click',()=>{document.querySelector(`.tabs [data-tab=${b.dataset.gotab}]`).click()}));
   v.querySelectorAll('[data-skill]').forEach(b=>b.addEventListener('click',()=>openSkill(b.dataset.skill)));
   v.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{logFilter=b.dataset.filter;render()}));
