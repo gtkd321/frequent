@@ -99,7 +99,7 @@ details.add summary{cursor:pointer;font-weight:700;color:var(--olive);list-style
 details.add summary::-webkit-details-marker{display:none}
 .form{display:grid;gap:var(--space-3);margin-top:var(--space-3)}
 label.f{display:grid;gap:var(--space-1);font-size:var(--text-sm);font-weight:500}
-input[type=text],textarea,select{width:100%;border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-sm);padding:var(--space-3);font-size:var(--text-base)}
+input[type=text],input[type=number],input[type=tel],textarea,select{width:100%;border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-sm);padding:var(--space-3);font-size:var(--text-base)}
 textarea{min-height:120px;resize:vertical;line-height:1.5}
 input[type=range]{width:100%;accent-color:var(--olive)}
 /* sheet */

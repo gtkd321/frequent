@@ -17,3 +17,32 @@ const CLIP_JAR={
  what:"For your promises, a second paper clip trick. Trent Dyrsmid kept two jars on his desk, one with 120 paper clips. After every sales call he moved one clip over, and he didn’t stop until the jar was empty. Each daily promise here has its own jar.",
  link:{t:"James Clear: the Paper Clip Strategy",u:"https://jamesclear.com/paper-clips"}
 };
+const COMPACT={
+ sizes:[["pocket","Pocket",1],["shoebox","Shoebox",4],["box","Moving box",16],["big","Furniture",64]],
+ what:"Turn a pile of knickknacks into one thing that’s worth more and takes up less. Put items on the shelf, group them into a bundle with a theme, then trade or sell the bundle and get one compact item you’ll actually use. The score is value per space: dollars per shoebox of room it takes.",
+ rules:[
+  "Price with sold listings, not asking prices. On eBay, search the exact item and tick Sold Items. Take the middle of the closest matches.",
+  "Bundle around a buyer, not around your shelf. A baker’s box, an office starter kit, a hand-tool set or a box of records beats a random pile.",
+  "Every bundle needs an anchor: the one item people notice first. The others make the deal stronger.",
+  "Price the bundle about 10–20% under the sum of the separate prices, and use one photo that shows everything.",
+  "High-value or one-of-a-kind items go alone. Small, cheap things go in lots.",
+  "Trading the bundle straight for the item is best. Selling it, then buying the item, counts too.",
+  "Broken, stained or missing pieces don’t go in a bundle. Toss or recycle them."],
+ targets:[
+  ["A quality voiceover microphone","Your audio studio, in the space of a coffee mug."],
+  ["An e-reader","Stands in for a shelf of paperbacks you’ve already read."],
+  ["One great chef’s knife","Replaces a drawer of gadgets."],
+  ["Noise-canceling headphones","For writing sessions and the studio."],
+  ["A good watch or a piece of gold or silver jewelry","Holds value and fits in a pocket."],
+  ["An external SSD","After you photograph or digitize what the boxes held."],
+  ["A fountain pen and a box of index cards","Your one-a-day card methods, upgraded."],
+  ["Good shelving for the audio studio","A house prize: it makes room instead of taking it."],
+  ["A quality vacuum","Another house prize, and it earns its spot."],
+  ["A gift card or fund toward a flight to Greece","The most compact thing there is."]],
+ fb:[
+  "Marketplace listings need a price, so put the cash value and add “Open to trades” in the description, with what you’d want instead.",
+  "Search Facebook for your area plus “buy sell trade” or “swap”, then filter to Groups. Read each group’s rules before posting.",
+  "If a trade offer comes in, ask for a photo of the actual item first.",
+  "Meet in a public, well-lit place. Check the item in person before you hand yours over."],
+ links:[{t:"How-To Geek: check what something is worth on eBay",u:"https://www.howtogeek.com/721794/how-to-see-what-something-is-worth-using-ebay/"},{t:"CNBC: organizers on bundling low-value items",u:"https://www.cnbc.com/amp/make-it/2024/03/28/what-to-sell-donate-and-trash-according-to-professional-organizers.html"},{t:"DIYAuctions: bundle pricing and anchor items",u:"https://www.diyauctions.com/learn/bundle-pricing-strategy"}]
+};
