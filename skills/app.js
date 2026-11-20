@@ -15,7 +15,7 @@ const fmtDate=d=>{const [y,m,dd]=d.split('-').map(Number);return new Date(y,m-1,
 
 const SKILL={},BRANCH_OF={};
 BRANCHES.forEach(b=>b.skills.forEach(([id,name])=>{SKILL[id]={id,name,branch:b};BRANCH_OF[id]=b.id}));
-const PRACTICE_BRANCHES=new Set(['mind','psych','spirit','fitness','music','home','fiction']);
+const PRACTICE_BRANCHES=new Set(['mind','psych','spirit','fitness','music','home','fiction','life']);
 const allFeelings=[];WHEEL.forEach((s,si)=>{s.inner.forEach(f=>allFeelings.push({f,core:s.core,si,ring:'inner'}));s.outer.forEach(f=>allFeelings.push({f,core:s.core,si,ring:'outer'}))});
 
 function pts(e){const base=(MODES[e.mode]||{pts:1}).pts;return e.points!=null?e.points:base+Math.max(0,(e.diff||2)-2)}
@@ -32,7 +32,7 @@ function renderHeader(){$('#phoraTotal').innerHTML=`<b>${total()} φόρα</b>${
 /* ---------- tabs ---------- */
 let tab='today',logFilter='all',logSort='new';
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{tab=b.dataset.tab;document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));render();window.scrollTo({top:0})}));
-function render(){const v=$('#view');v.innerHTML=({today:viewToday,write:viewWrite,sell:viewSell,tree:viewTree,log:viewLog,pivots:viewPivots})[tab]();bindView()}
+function render(){const v=$('#view');v.innerHTML=({today:viewToday,write:viewWrite,sell:viewSell,life:viewLife,tree:viewTree,log:viewLog,pivots:viewPivots})[tab]();bindView()}
 
 /* ---------- today ---------- */
 function dayOfYear(){const n=new Date();return Math.floor((n-new Date(n.getFullYear(),0,0))/864e5)}
@@ -53,6 +53,7 @@ function viewToday(){
   <div class="stats"><div class="stat"><b>${weekPts()}</b><span>φόρα this week</span></div><div class="stat"><b>${touched}/72</b><span>feelings touched</span></div><div class="stat"><b>${S.inventory.length}</b><span>inventories</span></div></div>
   <div class="practice-row">${others.map(k=>`<button class="mini" data-open="${P[k].fn}"><span class="eyebrow">${doneToday[k]?'Done today':'Also today'}</span><h4>${P[k].t}</h4><p>${P[k].d}</p></button>`).join('')}
   ${(()=>{const sc=S.chars&&S.chars.length?staleChar():null;return `<button class="mini" data-gotab="write"><span class="eyebrow">Fiction</span><h4>${sc?'How is '+esc(sc.name)+' doing?':'Back to your story'}</h4><p>${sc?'A two-question check-in with your character.':'Add your first character and log a session.'}</p></button>`})()}
+  ${(()=>{lifeInit();const d=S.promises.filter(p=>p.kind==='daily');const k=d.filter(p=>((p.log||{})[today()]||0)>=p.clips).length;return `<button class="mini" data-gotab="life"><span class="eyebrow">Life · ${d.length?k+' of '+d.length+' promises kept':'promises to self'}</span><h4>${S.clip.goal?'Trade up: '+esc(clipNow()):'The paper clip game'}</h4><p>${S.clip.goal?'Offer it to someone today.':'Trade one red paper clip up, one person at a time.'}</p></button>`})()}
   ${(()=>{const c=cardOfDay();const n=Object.keys(cardState()).length;return `<button class="mini card-mini" data-open="card">${cardIcon(c.m,44)}<span class="eyebrow">Index cards · ${c.done?'done today':n+' of '+CARD_METHODS.length+' tried'}</span><h4>${c.done?'Tomorrow: next method':esc(c.m.name)}</h4><p>${c.done?'You tried '+esc(c.m.name)+'. Tap to add notes.':esc(c.m.tag)}</p></button>`})()}
   <button class="mini" data-open="read"><span class="eyebrow">Optional</span><h4>Deep read</h4><p>Log one Hacker News thread: the problem, their approach, one idea to borrow.</p></button></div>
   <article class="card ladder-card" style="margin-top:var(--space-5)"><span class="eyebrow">The Ladder · Step ${L[0]} of 30</span><h3 style="font-family:var(--font-display);font-size:var(--text-lg);margin:var(--space-2) 0">${esc(L[1])}</h3><p>${esc(L[2])}</p><p class="note" style="margin-top:var(--space-2)">This question appears in tonight’s inventory.</p></article>
@@ -676,9 +677,56 @@ function openCardShelf(){const st=cardState();
   <div class="shelf">${CARD_METHODS.map((m,i)=>`<button class="shelf-item" data-cm="${m.id}">${cardIcon(m,48)}<span><b>${i+1}. ${esc(m.name)}</b><span class="xs muted">${st[m.id]?'Tried · '+'★'.repeat(st[m.id].rating||0):esc(m.tag)}</span></span></button>`).join('')}</div>`);
   $('#sheetBody').querySelectorAll('[data-cm]').forEach(b=>b.addEventListener('click',()=>openCard(b.dataset.cm)));
 }
+
+/* ---------- life: promises and the paper clip game ---------- */
+function lifeInit(){S.promises=S.promises||[];S.clip=S.clip||{goal:'',trades:[],offers:[]};S.identity=S.identity||''}
+function clipNow(){const t=S.clip.trades;return t.length?t[t.length-1].got:'One red paper clip'}
+function promiseStreak(p){let n=0;const d=new Date();if(((p.log||{})[today()]||0)<p.clips)d.setDate(d.getDate()-1);for(;;){const k=d.toISOString().slice(0,10);if(((p.log||{})[k]||0)>=p.clips){n++;d.setDate(d.getDate()-1)}else break}return n}
+function jarSvg(n,color){const show=Math.min(n,12);let c='';for(let i=0;i<show;i++){const x=8+(i%4)*8,y=44-Math.floor(i/4)*9,r=(i*37)%50-25;c+=`<rect x="${x}" y="${y}" width="9" height="4" rx="2" fill="none" stroke="${color}" stroke-width="1.6" transform="rotate(${r} ${x+4} ${y+2})"/>`}
+ return `<svg width="48" height="58" viewBox="0 0 48 58" aria-hidden="true"><path d="M6 12h36v38a6 6 0 0 1-6 6H12a6 6 0 0 1-6-6z" fill="#fffdf7" stroke="#8a8670" stroke-width="1.6"/><rect x="4" y="6" width="40" height="6" rx="2" fill="#d8d2bd"/>${c}${n>12?`<text x="24" y="22" text-anchor="middle" font-size="9" fill="#555">+${n-12}</text>`:''}</svg>`}
+function viewLife(){lifeInit();
+  const tr=S.clip.trades,of=S.clip.offers;const wkOff=of.filter(o=>daysSince(o.date)<7).length+tr.filter(t=>daysSince(t.date)<7).length;
+  const daily=S.promises.filter(p=>p.kind==='daily'),todo=S.promises.filter(p=>p.kind==='once'&&!p.kept),kept=S.promises.filter(p=>p.kind==='once'&&p.kept);
+  const game=!S.clip.goal?`<span class="eyebrow">Start here · the paper clip game</span><h3>Trade one red paper clip up, one person at a time</h3><p class="muted">${esc(CLIP_GAME.story.split('. ').slice(0,3).join('. '))}.</p><div class="row" style="margin-top:var(--space-4)"><button class="btn" id="clipStart">Start the game</button></div>`
+   :`<span class="eyebrow">The paper clip game · trade ${tr.length} · ${wkOff}/3 offers this week</span><h3>You have: ${esc(clipNow())}</h3><p class="muted">Aiming for: ${esc(S.clip.goal)}</p>
+   <div class="chain">${['One red paper clip'].concat(tr.map(t=>t.got)).map((x,i)=>`<span class="link-chip${i===tr.length?' now':''}">${esc(x)}</span>`).join('<span class="arr">→</span>')}</div>
+   <div class="row" style="margin-top:var(--space-4)"><button class="btn" id="clipTrade">Log a trade (+5)</button><button class="btn ghost" id="clipOffer">I offered it (+1)</button><button class="btn ghost" id="clipPost">Copy a trade post</button><button class="btn ghost small" id="clipRules">Rules</button></div>`;
+  return `<h1 class="section-title">Life</h1>
+  <p class="lede">Promises to yourself and the person you’re growing into. Small, kept, every day.</p>
+  <button class="identity" id="idEdit">${S.identity?`<span class="eyebrow">Who I’m becoming</span><span class="id-t">I am someone who ${esc(S.identity)}</span>`:'<span class="eyebrow">Who I’m becoming</span><span class="id-t muted">Finish the sentence: I am someone who…</span>'}</button>
+  <article class="card up-next">${game}</article>
+  <h2 class="sub-title">Daily promises</h2>
+  <p class="small muted" style="margin-bottom:var(--space-3)">${esc(CLIP_JAR.what)} <a href="${CLIP_JAR.link.u}" target="_blank" rel="noopener">${esc(CLIP_JAR.link.t)}</a></p>
+  ${daily.length?`<div class="grid2">${daily.map(p=>{const m=(p.log||{})[today()]||0;const full=m>=p.clips;return `<div class="card promise${full?' kept':''}"><div class="jars"><button class="jar-btn" data-clip="${p.id}" ${full?'disabled':''} aria-label="Move one clip for ${esc(p.text)}">${jarSvg(p.clips-m,'#8a8670')}<span class="xs">to go</span></button><span class="arr">→</span><span class="jar-btn">${jarSvg(m,'#b5523b')}<span class="xs">done</span></span></div><div class="p-body"><h4>${esc(p.text)}</h4><p class="xs muted">${full?'Kept today':m+' of '+p.clips+' today'} · ${promiseStreak(p)} day streak</p>${p.why?`<p class="small">${esc(p.why)}</p>`:''}<button class="linkish xs" data-pdel="${p.id}">Remove</button></div></div>`}).join('')}</div>`:`<div class="card"><p class="small">No daily promises yet. Start with the three minimums you already chose.</p><div class="row" style="margin-top:var(--space-3)"><button class="btn small" id="seedMins">Add chant, practice and workout</button></div></div>`}
+  <h2 class="sub-title">Life to-do</h2>
+  ${todo.length?`<div class="card">${todo.map(p=>`<label class="step-row entry"><input type="checkbox" data-keep="${p.id}"><div><div class="entry-title">${esc(p.text)}</div>${p.why?`<div class="entry-meta"><span>${esc(p.why)}</span></div>`:''}</div></label>`).join('')}</div>`:'<p class="empty">Things you’ve promised yourself you’ll do once: be at the family harvest, see Meteora, finish the novel.</p>'}
+  <div class="row" style="margin-top:var(--space-3)"><button class="btn ghost small" id="pNew">+ Add a promise</button></div>
+  ${kept.length?`<h2 class="sub-title">Kept</h2><div class="card">${kept.slice().reverse().map(p=>`<div class="entry"><div><div class="entry-title">${esc(p.text)}</div><div class="entry-meta"><span>Kept ${esc(fmtDate(p.kept))}</span></div></div></div>`).join('')}</div>`:''}
+  ${tr.length?`<h2 class="sub-title">Trade stories</h2><div class="card">${tr.slice().reverse().map((t,i)=>`<div class="entry"><div><div class="entry-title">${esc(t.gave)} → ${esc(t.got)}</div><div class="entry-meta"><span>${esc(fmtDate(t.date))}</span><span>${esc(t.who||'')}</span></div>${t.lesson?`<p class="small">“${esc(t.lesson)}”</p>`:''}</div></div>`).join('')}</div>`:''}`;
+}
+function clipRules(){openSheet('The paper clip game',`<div class="stack"><p>${esc(CLIP_GAME.story)}</p><p class="small muted">${esc(CLIP_GAME.caveat)}</p><h4>Rules</h4><ol class="tight">${CLIP_GAME.rules.map(r=>`<li>${esc(r)}</li>`).join('')}</ol><p class="small">${CLIP_GAME.links.map(l=>`<a href="${l.u}" target="_blank" rel="noopener">${esc(l.t)}</a>`).join(' · ')}</p></div>`)}
+function bindLife(v){
+  const on=(id,fn)=>{const e=v.querySelector('#'+id);if(e)e.addEventListener('click',fn)};
+  on('clipRules',clipRules);
+  on('clipStart',()=>{openSheet('Start the paper clip game',`<div class="stack"><p class="small">${esc(CLIP_GAME.story)}</p><p class="small muted">${esc(CLIP_GAME.caveat)}</p><ol class="tight">${CLIP_GAME.rules.map(r=>`<li>${esc(r)}</li>`).join('')}</ol>
+   <form class="form" id="cgForm"><label class="f">What would be fun to trade up to? (You can change it later.)<input type="text" name="goal" required maxlength="80" placeholder="A guitar, a flight to Greece, a used car…"></label><button class="btn" type="submit">Find a red paper clip and begin</button></form></div>`);
+   $('#cgForm').addEventListener('submit',ev=>{ev.preventDefault();S.clip.goal=new FormData(ev.target).get('goal').trim();save();closeSheet();render();toast('Game on. Offer the clip to three people this week.')})});
+  on('clipTrade',()=>{openSheet('Log a trade',`<form class="form" id="ctForm"><label class="f">You gave<input type="text" name="gave" required maxlength="80" value="${esc(clipNow())}"></label><label class="f">You got<input type="text" name="got" required maxlength="80"></label><label class="f">Who (first name)<input type="text" name="who" maxlength="40"></label><label class="f">Where you met<input type="text" name="where" maxlength="80"></label><label class="f">What did they care about? One detail about them.<textarea name="lesson" rows="3"></textarea></label><button class="btn" type="submit">Save trade</button></form>`);
+   $('#ctForm').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));f.date=today();S.clip.trades.push(f);addEntry({title:'Paper clip trade: '+f.gave+' → '+f.got,skill:'life_trade',skill2:'biz_sales',mode:'tested',points:5});toast('+5 φόρα');closeSheet();render()})});
+  on('clipOffer',()=>{S.clip.offers.push({date:today(),item:clipNow()});addEntry({title:'Offered '+clipNow()+' for trade',skill:'life_trade',mode:'practice',points:1});toast('+1 φόρα · a no still counts');render()});
+  on('clipPost',()=>{const t=CLIP_GAME.post.replace('[ITEM]',clipNow());navigator.clipboard&&navigator.clipboard.writeText(t).then(()=>toast('Post copied'),()=>toast('Copy failed'));});
+  on('idEdit',()=>{openSheet('Who I’m becoming',`<form class="form" id="idForm"><p class="small muted">James Clear’s idea: every kept promise is a vote for the person you want to be.</p><label class="f">I am someone who…<input type="text" name="t" maxlength="120" value="${esc(S.identity)}" placeholder="keeps small promises to himself"></label><button class="btn" type="submit">Save</button></form>`);$('#idForm').addEventListener('submit',ev=>{ev.preventDefault();S.identity=new FormData(ev.target).get('t').trim();save();closeSheet();render()})});
+  on('seedMins',()=>{[['Chant','Morning, before anything else'],['Practice','My daily practice rep'],['Workout','9 AM, phone stays in the car']].forEach(([t,w])=>S.promises.push({id:uid(),kind:'daily',text:t,why:w,clips:1,log:{},created:today()}));save();render()});
+  on('pNew',()=>{openSheet('New promise',`<form class="form" id="pForm"><label class="f">I promise myself I will…<input type="text" name="text" required maxlength="100"></label><label class="f">Kind<select name="kind"><option value="daily">Every day (paper clip jar)</option><option value="once">Once (life to-do)</option></select></label><label class="f">Clips per day (daily only)<input type="number" name="clips" min="1" max="120" value="1"></label><label class="f">Why it matters<input type="text" name="why" maxlength="120"></label><button class="btn" type="submit">Make the promise</button></form>`);
+   $('#pForm').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));S.promises.push({id:uid(),kind:f.kind,text:f.text.trim(),why:f.why.trim(),clips:Math.max(1,Math.min(120,+f.clips||1)),log:{},created:today()});save();closeSheet();render()})});
+  v.querySelectorAll('[data-clip]').forEach(b=>b.addEventListener('click',()=>{const p=S.promises.find(x=>x.id===b.dataset.clip);p.log=p.log||{};const m=(p.log[today()]||0)+1;p.log[today()]=m;
+    if(m===p.clips){addEntry({title:'Promise kept: '+p.text,skill:'life_promise',mode:'practice',points:2});toast('Kept · +2 φόρα')}else{save();toast((p.clips-m)+' to go')}render()}));
+  v.querySelectorAll('[data-keep]').forEach(b=>b.addEventListener('change',()=>{const p=S.promises.find(x=>x.id===b.dataset.keep);p.kept=today();addEntry({title:'Kept a promise: '+p.text,skill:'life_promise',mode:'handson',points:3});toast('Promise kept · +3 φόρα');render()}));
+  v.querySelectorAll('[data-pdel]').forEach(b=>b.addEventListener('click',()=>{if(confirm('Remove this promise?')){S.promises=S.promises.filter(x=>x.id!==b.dataset.pdel);save();render()}}));
+}
 /* ---------- bind ---------- */
 function bindView(){
-  const v=$('#view');bindWrite(v);bindSell(v);
+  const v=$('#view');bindWrite(v);bindSell(v);bindLife(v);
   v.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>({think:openThink,feel:()=>openFeel(),inv:openInv,read:openRead,card:()=>openCard(cardOfDay().m.id),shelf:openCardShelf})[b.dataset.open]()));
   v.querySelectorAll('[data-gotab]').forEach(b=>b.addEventListener('click',()=>{document.querySelector(`.tabs [data-tab=${b.dataset.gotab}]`).click()}));
   v.querySelectorAll('[data-skill]').forEach(b=>b.addEventListener('click',()=>openSkill(b.dataset.skill)));
@@ -688,7 +736,7 @@ function bindView(){
   v.querySelectorAll('[data-quick]').forEach(x=>x.addEventListener('click',()=>quickLog(x.dataset.quick,x.dataset.mode,x.dataset.title)));
   const af=$('#addForm');if(af)af.addEventListener('submit',ev=>{ev.preventDefault();const f=new FormData(af);const e={title:f.get('title'),skill:f.get('skill'),mode:f.get('mode'),diff:+f.get('diff')};addEntry(e);toast(`+${pts(e)} φόρα`);render()});
   const ex=$('#exportBtn');if(ex)ex.addEventListener('click',()=>{const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='skill-tree-backup-'+today()+'.json';document.body.appendChild(a);a.click();a.remove();toast('Backup saved')});
-  const im=$('#importFile');if(im)im.addEventListener('change',async()=>{try{const d=JSON.parse(await im.files[0].text());if(!Array.isArray(d.entries))throw 0;S=Object.assign({entries:[],think:[],feelings:[],inventory:[],stars:{},focusTarget:10,chars:[],people:[],books:[],writing:[],drafts:[],blockHits:{},leads:[],sales:[],bizSteps:{},cardm:{},sellPhone:'+18033990665'},d);save();renderHeader();render();toast('Backup restored')}catch(e){toast('That file is not a Skill Tree backup.')}});
+  const im=$('#importFile');if(im)im.addEventListener('change',async()=>{try{const d=JSON.parse(await im.files[0].text());if(!Array.isArray(d.entries))throw 0;S=Object.assign({entries:[],think:[],feelings:[],inventory:[],stars:{},focusTarget:10,chars:[],people:[],books:[],writing:[],drafts:[],blockHits:{},leads:[],sales:[],bizSteps:{},cardm:{},promises:[],clip:{goal:'',trades:[],offers:[]},identity:'',sellPhone:'+18033990665'},d);save();renderHeader();render();toast('Backup restored')}catch(e){toast('That file is not a Skill Tree backup.')}});
 }
 renderHeader();render();
 })();
