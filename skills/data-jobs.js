@@ -1,0 +1,29 @@
+/* Sensory-friendly day jobs near Lexington SC. q=quiet, c=low crowds, p=steady pace, o=outdoors, l=soft light. Scores 1-3 are rough guesses. */
+window.JOBS={
+note:'A side job to get out of the car and mix up the week. Lower pay is fine. Uber stays the backup, so there is no pressure on any single application.',
+tags:{q:'Quiet',c:'Few crowds',p:'Steady pace',o:'Outdoors',l:'Soft light'},
+ideas:[
+{id:'theater',t:'Movie theater ticket taker or usher',where:'Regal Lexington, 929 North Lake Dr',pay:'$12/hr, free movies',url:'https://www.indeed.com/q-regal-theatres-l-lexington,-sc-jobs.html',s:{q:2,c:2,p:2,o:0,l:3},tip:'Ask for box office or usher shifts on weekday afternoons. The concession stand is the loud, busy, popcorn-smell spot.'},
+{id:'amc',t:'Theater crew, AMC Columbia',where:'122 Afton Ct, Harbison',pay:'$10 to $10.50/hr',url:'https://careers.amctheatres.com/crew/job/P1-2025523-18',s:{q:2,c:2,p:2,o:0,l:3},tip:'Crew rotate through tickets, snacks and cleaning, so ask which stations you can lean toward.'},
+{id:'library',t:'Library associate or page',where:'Richland Library, or Lexington County Public Library',pay:'About $15.75/hr part-time (Richland)',url:'https://www.indeed.com/q-library-assistant-l-lexington,-sc-jobs.html',url2:'https://www.lex-co.sc.gov/employment',s:{q:3,c:3,p:3,o:0,l:2},tip:'Shelving and circulation are calm and predictable. One Lexington County application covers every county opening.'},
+{id:'zoo',t:'Grounds, horticulture or gondola operator',where:'Riverbanks Zoo and Garden',pay:'$11.50/hr for transportation operator',url:'https://www.riverbanks.org/join-our-team/job-opportunities/',s:{q:2,c:2,p:2,o:3,l:3},tip:'Garden and grounds roles are the quiet side. Online applications only; no walk-ins.'},
+{id:'shoals',t:'Park custodian, maintenance or front desk',where:'Saluda Shoals and other Irmo Chapin parks',pay:'$11.10/hr, free park pass',url:'https://www.icrc.net/join-our-team/all-jobs',s:{q:3,c:2,p:3,o:2,l:3},tip:'Maintenance aide is mostly outdoors and on your own. Holiday lights attendant is seasonal and busier.'},
+{id:'town',t:'Grounds or parks maintenance',where:'Town of Lexington Parks and Community Services',pay:'See posting',url:'https://lexsc.gov/Jobs.aspx',s:{q:2,c:3,p:3,o:3,l:3},tip:'Send a resume, cover letter and references to the parks director, as the posting says.'},
+{id:'stpark',t:'Seasonal park attendant or trail crew',where:'SC State Parks, such as Dreher Island on Lake Murray',pay:'Starts near minimum wage',url:'https://www.scprt.com/parks/jobs-at-state-parks/temporary-and-seasonal-employment',s:{q:3,c:3,p:3,o:3,l:3},tip:'Apply in January or February, directly to the park, for spring and summer.'},
+{id:'school',t:'Substitute library or instructional assistant',where:'Lexington One, through Kelly Education',pay:'$95 to $110/day as a substitute teacher',url:'https://www.linkedin.com/jobs/view/substitute-2026-2027-at-lexington-county-school-district-one-4422614901',s:{q:1,c:1,p:2,o:0,l:1},tip:'You choose which days you take. Pick library assignments over classrooms when you want it quiet.'},
+{id:'garden',t:'Garden center or nursery associate',where:'Local nurseries, Lowe’s or Home Depot garden centers',pay:'Varies',url:'https://www.indeed.com/jobs?q=garden+center&l=Lexington%2C+SC',s:{q:2,c:2,p:2,o:3,l:3},tip:'Ties in with your plant propagation. Mornings watering and stocking are the calm part.'},
+{id:'early',t:'Early-morning stocker or bakery prep',where:'Grocery stores and bakeries',pay:'Varies',url:'https://www.indeed.com/jobs?q=overnight+stocker+OR+bakery&l=Lexington%2C+SC',s:{q:2,c:3,p:3,o:0,l:1},tip:'Before opening there are few customers and the work is the same every day. The lights can be bright.'},
+{id:'sexton',t:'Church caretaker or sexton',where:'Churches near Lexington and Columbia',pay:'Varies, often a few hours a week',url:'https://www.indeed.com/jobs?q=church+custodian&l=Lexington%2C+SC',s:{q:3,c:3,p:3,o:1,l:2},tip:'Ask in person after a service; these jobs are rarely posted.'}
+],
+help:[['SC Works Lexington Center: free resume and job-search help, 671 Main St, West Columbia, (803) 359-6131','https://scworks.org/about-us/statewide-centers/midlands']],
+scripts:[
+['Short application note','I’m a reliable, punctual local looking for steady part-time hours. I’ve worked years of customer service in rideshare, plus sales and light construction, and I teach Greek. I’m calm with the public, careful with details, and happy to learn every station. Weekday and some weekend availability.'],
+['Follow-up call, about 5 days later','Hi, this is Daniel. I applied for the [job] position on [day] and wanted to check in. I’m still very interested. Is there anything else you need from me, or a good time to stop by?'],
+['Questions that reveal the sensory side','What does a typical shift look like hour by hour? Which stations are quietest? How busy are weekday versus weekend shifts? Can I wear earplugs or take a short break outside when it gets loud?'],
+['Asking for an adjustment, if you need one','I do my best work when I can manage noise. Would it be okay if I wore low-profile earplugs, or took a two-minute break outside after a rush?']
+],
+adjust:['Earplugs or noise-reducing earbuds','A quiet station or quieter shifts','Short breaks outside','Softer or adjusted lighting','A steady, predictable schedule'],
+adjustSrc:[['Common sensory adjustments: quiet areas, noise-cancelling headphones, adjusted lighting (AskEARN)','https://askearn.org/page/neurodiversity-accommodations'],['Free, confidential advice on job accommodations (Job Accommodation Network)','https://askjan.org/']],
+kit:['Earplugs in your pocket','Sunglasses or a cap for bright lights','Water and a snack','Plan one 2-minute reset outside'],
+stages:['Applied','Followed up','Interview','Offer','Started','No']
+};

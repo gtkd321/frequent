@@ -52,7 +52,7 @@ function viewToday(){
   <article class="card up-next"><span class="eyebrow">Up next${doneToday[next]?' · done today':''}</span><h3>${P[next].t}</h3><p class="muted">${P[next].d}</p><div class="row" style="margin-top:var(--space-4)"><button class="btn" data-open="${P[next].fn}">${P[next].btn}</button></div></article>
   <div class="stats"><div class="stat"><b>${weekPts()}</b><span>φόρα this week</span></div><div class="stat"><b>${touched}/72</b><span>feelings touched</span></div><div class="stat"><b>${S.inventory.length}</b><span>inventories</span></div></div>
   ${warmCard()}
-  <div class="practice-row">${moveMini()}${treatMini()}${others.map(k=>`<button class="mini" data-open="${P[k].fn}"><span class="eyebrow">${doneToday[k]?'Done today':'Also today'}</span><h4>${P[k].t}</h4><p>${P[k].d}</p></button>`).join('')}
+  <div class="practice-row">${jobMini()}${moveMini()}${treatMini()}${others.map(k=>`<button class="mini" data-open="${P[k].fn}"><span class="eyebrow">${doneToday[k]?'Done today':'Also today'}</span><h4>${P[k].t}</h4><p>${P[k].d}</p></button>`).join('')}
   ${(()=>{const sc=S.chars&&S.chars.length?staleChar():null;return `<button class="mini" data-gotab="write"><span class="eyebrow">Fiction</span><h4>${sc?'How is '+esc(sc.name)+' doing?':'Back to your story'}</h4><p>${sc?'A two-question check-in with your character.':'Add your first character and log a session.'}</p></button>`})()}
   ${(()=>{lifeInit();const d=S.promises.filter(p=>p.kind==='daily');const k=d.filter(p=>((p.log||{})[today()]||0)>=p.clips).length;return `<button class="mini" data-gotab="life"><span class="eyebrow">Life · ${d.length?k+' of '+d.length+' promises kept':'promises to self'}</span><h4>${S.clip.goal?'Trade up: '+esc(clipNow()):'The paper clip game'}</h4><p>${S.clip.goal?'Offer it to someone today.':'Trade one red paper clip up, one person at a time.'}</p></button>`})()}
   ${(()=>{const c=cardOfDay();const n=Object.keys(cardState()).length;return `<button class="mini card-mini" data-open="card">${cardIcon(c.m,44)}<span class="eyebrow">Index cards · ${c.done?'done today':n+' of '+CARD_METHODS.length+' tried'}</span><h4>${c.done?'Tomorrow: next method':esc(c.m.name)}</h4><p>${c.done?'You tried '+esc(c.m.name)+'. Tap to add notes.':esc(c.m.tag)}</p></button>`})()}
@@ -561,7 +561,7 @@ function bindWrite(v){
 let bizTab='ride';
 function dueLeads(){return S.leads.filter(l=>l.nextDate&&l.nextDate<=today()&&!['Won','Not now'].includes(l.stage)).sort((a,b)=>a.nextDate.localeCompare(b.nextDate))}
 function nextStep(bid){const b=BIZ.find(x=>x.id===bid);const d=S.bizSteps[bid]||{};const i=b.steps.findIndex((_,i)=>!d[i]);return i<0?null:{b,i,t:b.steps[i]}}
-function viewSell(){
+function viewSell(){if(bizTab==='jobs')return jobsView(sellSeg());
   const b=BIZ.find(x=>x.id===bizTab);const due=dueLeads();const d=S.bizSteps[b.id]||{};const done=Object.keys(d).length;
   const leads=S.leads.filter(l=>l.biz===b.id);const wk=S.leads.reduce((a,l)=>a+(l.touches||[]).filter(t=>daysSince(t.date)<7).length,0);
   const rev=S.sales.filter(s=>s.biz===b.id&&daysSince(s.date)<30).reduce((a,s)=>a+s.amount,0);
@@ -573,7 +573,7 @@ function viewSell(){
   const stageCount=STAGES.map(s=>[s,leads.filter(l=>l.stage===s).length]);
   return `<h1 class="section-title">Sell</h1>
   <p class="lede">One next action at a time. Due follow-ups come first, then the next concrete step for the business you’re viewing.</p>
-  <div class="seg" style="margin-bottom:var(--space-4)">${BIZ.map(x=>`<button data-biz="${x.id}" aria-pressed="${x.id===b.id}">${esc(x.short)}</button>`).join('')}</div>
+  ${sellSeg()}
   <article class="card up-next">${top}</article>
   <div class="stats"><div class="stat"><b>${done}/${b.steps.length}</b><span>steps done</span></div><div class="stat"><b>${leads.filter(l=>!['Won','Not now'].includes(l.stage)).length}</b><span>open leads</span></div><div class="stat"><b>${b.id==='ride'?'$'+rev.toFixed(0):wk}</b><span>${b.id==='ride'?'sales, last 30 days':'follow-ups this week'}</span></div></div>
   <p class="small muted">${esc(b.lede)}</p>
@@ -657,7 +657,7 @@ function bindSell(v){
   v.querySelectorAll('[data-carcard]').forEach(b=>b.addEventListener('click',carCard));
   v.querySelectorAll('[data-bstep]').forEach(b=>b.addEventListener('click',()=>{stepDone(bizTab,+b.dataset.bstep);render()}));
   v.querySelectorAll('[data-bstepchk]').forEach(c=>c.addEventListener('change',()=>{const i=+c.dataset.bstepchk;if(c.checked)stepDone(bizTab,i);else{delete S.bizSteps[bizTab][i];save()}render()}));
-  v.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(b.dataset.copy);toast('Copied')}catch(e){toast('Copy failed on this browser.')}}));
+  v.querySelectorAll('[data-copy]').forEach(b=>{b.dataset.cb=1;b.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(b.dataset.copy);toast('Copied')}catch(e){toast('Copy failed on this browser.')}})});
 }
 
 
@@ -863,9 +863,49 @@ function openTreat(){const st=treatStats(),T=S.treats,c=T.cur;
    const sync=()=>{$('#tVidW').style.display=document.querySelector('input[name=tr]:checked').value==='0'?'':'none'};document.querySelectorAll('input[name=tr]').forEach(x=>x.addEventListener('change',sync));
    $('#tStart').addEventListener('click',()=>{const task=$('#tTask').value.trim();if(!task){toast('Name the block first.');return}const i=+document.querySelector('input[name=tr]:checked').value;const v=$('#tVid').value.trim();if(i===0&&!v){toast('Pick the video now, before working.');return}T.cur={task,treat:TREATS.after[i],video:i===0?v:'',start:Date.now()};save();toast('Go. The treat is waiting.');closeSheet();render()})}
   $('#sheetBody').querySelectorAll('[data-big]').forEach(x=>x.addEventListener('click',()=>{T.claimed.push({date:today(),what:TREATS.big[+x.dataset.big]});addEntry({title:'Big treat: '+TREATS.big[+x.dataset.big],skill:'home_ops',mode:'practice',points:0});toast('Enjoy it. You earned it.');openTreat()}))}
+function sellSeg(){return `<div class="seg" style="margin-bottom:var(--space-4)">${BIZ.map(x=>`<button data-biz="${x.id}" aria-pressed="${x.id===bizTab}">${esc(x.short)}</button>`).join('')}<button data-biz="jobs" aria-pressed="${bizTab==='jobs'}">Day job</button></div>`}
+/* ---------- day jobs ---------- */
+function jobsInit(){S.jobs=S.jobs||[];S.jobPrefs=S.jobPrefs||['q','c','p']}
+function jobScore(x){return S.jobPrefs.reduce((a,k)=>a+(x.s[k]||0),0)}
+function jobIdeas(){jobsInit();return JOBS.ideas.slice().sort((a,b)=>jobScore(b)-jobScore(a))}
+function jobPick(){const used=new Set(S.jobs.map(j=>j.idea));const c=jobIdeas().filter(x=>!used.has(x.id));return c.length?c[warmDay()%Math.min(3,c.length)]:null}
+function jobDue(){jobsInit();return S.jobs.filter(j=>j.stage==='Applied'&&daysSince(j.date)>=5)}
+function jobMini(){jobsInit();const wk=S.jobs.filter(j=>daysSince(j.date)<7).length,d=jobDue(),p=jobPick();
+  return `<button class="mini" data-gojobs><span class="eyebrow">Day job · ${wk} of 3 applied this week</span><h4>${d.length?'Follow up: '+esc(d[0].t):p?esc(p.t):'Find one more'}</h4><p>${d.length?esc(d[0].where):p?esc(p.where)+' · '+esc(p.pay):'Add a job you spotted.'}</p></button>`}
+function dots(n){return '<span class="jdots">'+[1,2,3].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')+'</span>'}
+function jobCard(x,big){const ap=S.jobs.find(j=>j.idea===x.id);
+  return `<div class="${big?'':'card job-card'}"><span class="eyebrow">${esc(x.where)} · ${esc(x.pay)}</span><h${big?3:4} style="margin:var(--space-1) 0">${esc(x.t)}</h${big?3:4}>
+  <div class="jtags">${Object.keys(JOBS.tags).map(k=>`<span class="xs${S.jobPrefs.includes(k)?' strong':''}">${JOBS.tags[k]} ${dots(x.s[k]||0)}</span>`).join('')}</div>
+  <p class="small" style="margin-top:var(--space-2)">${esc(x.tip)}</p>
+  <div class="row" style="margin-top:var(--space-3)"><a class="btn ${big?'':'ghost '}small" href="${x.url}" target="_blank" rel="noopener">Open the postings</a>${x.url2?`<a class="btn ghost small" href="${x.url2}" target="_blank" rel="noopener">County application</a>`:''}${ap?`<span class="xs muted">Applied ${fmtDate(ap.date)} · ${esc(ap.stage)}</span>`:`<button class="btn small" data-japply="${x.id}">I applied (+3 φόρα)</button>`}</div></div>`}
+function jobsView(seg){jobsInit();const d=jobDue(),p=jobPick(),wk=S.jobs.filter(j=>daysSince(j.date)<7).length;
+  const open=S.jobs.filter(j=>!['Started','No'].includes(j.stage)).length,iv=S.jobs.filter(j=>['Interview','Offer','Started'].includes(j.stage)).length;
+  const fu=JOBS.scripts[1][1];
+  const top=d.length?`<span class="eyebrow">Follow up · applied ${daysSince(d[0].date)} days ago</span><h3>${esc(d[0].t)}</h3><p class="muted">${esc(d[0].where)}</p><div class="row" style="margin-top:var(--space-4)"><button class="btn" data-jfu="${d[0].id}">I followed up (+1)</button><button class="btn ghost" data-copy="${esc(fu.replace('[job]',d[0].t))}">Copy the call script</button></div>`
+   :p?`<span class="eyebrow">Today’s one application · best match for your filter</span>${jobCard(p,true)}`:`<span class="eyebrow">Every idea tried</span><h3>Add one you spotted</h3>`;
+  return `<h1 class="section-title">Sell</h1><p class="lede">${esc(JOBS.note)}</p>${seg}
+  <article class="card up-next">${top}</article>
+  <div class="stats"><div class="stat"><b>${wk}/3</b><span>applied this week</span></div><div class="stat"><b>${open}</b><span>open applications</span></div><div class="stat"><b>${iv}</b><span>interviews or better</span></div></div>
+  <h2 class="sub-title">What matters most to you</h2><div class="row">${Object.keys(JOBS.tags).map(k=>`<button class="btn small ${S.jobPrefs.includes(k)?'':'ghost'}" data-jpref="${k}" aria-pressed="${S.jobPrefs.includes(k)}">${JOBS.tags[k]}</button>`).join('')}</div>
+  <p class="xs muted" style="margin-top:var(--space-2)">Jobs are sorted by your picks. Dots are rough guesses; the first shift tells you more.</p>
+  <h2 class="sub-title">My applications</h2>
+  ${S.jobs.length?S.jobs.slice().reverse().map(j=>`<div class="entry"><div><div class="entry-title">${esc(j.t)}</div><div class="entry-meta"><span>${esc(j.where)}</span><span>${fmtDate(j.date)}</span></div></div><select data-jstage="${j.id}" aria-label="Stage">${JOBS.stages.map(s=>`<option${s===j.stage?' selected':''}>${s}</option>`).join('')}</select></div>`).join(''):'<p class="small muted">Nothing yet. One application is a win.</p>'}
+  <form id="jAdd" class="row" style="margin-top:var(--space-3);align-items:flex-end"><label class="f" style="flex:2">Job I spotted<input type="text" name="t" maxlength="80" placeholder="Bookstore clerk" required></label><label class="f" style="flex:2">Where<input type="text" name="w" maxlength="80" placeholder="Lexington"></label><button class="btn ghost" type="submit">Add (+3)</button></form>
+  <h2 class="sub-title">Sensory-friendly ideas nearby</h2><div class="job-grid">${jobIdeas().map(x=>jobCard(x)).join('')}</div>
+  <h2 class="sub-title">Scripts</h2><div class="stack">${JOBS.scripts.map(([h,t])=>`<div class="card"><span class="eyebrow">${esc(h)}</span><p class="small" style="margin-top:var(--space-2)">${esc(t)}</p><button class="btn ghost small" style="margin-top:var(--space-2)" data-copy="${esc(t)}">Copy</button></div>`).join('')}</div>
+  <details style="margin-top:var(--space-4)"><summary class="small">Adjustments you can ask for, and a first-shift kit</summary><ul class="tight small">${JOBS.adjust.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><p class="xs">${JOBS.adjustSrc.map(x=>`<a href="${x[1]}" target="_blank" rel="noopener">${esc(x[0])}</a>`).join(' · ')}</p><p class="small"><b>Kit:</b> ${JOBS.kit.map(esc).join(' · ')}</p></details>
+  <p class="xs" style="margin-top:var(--space-3)">${JOBS.help.map(x=>`<a href="${x[1]}" target="_blank" rel="noopener">${esc(x[0])}</a>`).join('')}</p>`}
+function bindJobs(v){
+  v.querySelectorAll('[data-gojobs]').forEach(b=>b.addEventListener('click',()=>{bizTab='jobs';document.querySelector('.tabs [data-tab=sell]').click()}));
+  const apply=(t,where,idea)=>{S.jobs.push({id:uid(),idea,t,where,stage:'Applied',date:today()});addEntry({title:'Applied: '+t,skill:'biz_career',mode:'handson',points:3});toast('+3 φόρα. Follow-up reminder in 5 days.');render()};
+  v.querySelectorAll('[data-japply]').forEach(b=>b.addEventListener('click',()=>{const x=JOBS.ideas.find(i=>i.id===b.dataset.japply);apply(x.t,x.where,x.id)}));
+  v.querySelectorAll('[data-jfu]').forEach(b=>b.addEventListener('click',()=>{const j=S.jobs.find(x=>x.id===b.dataset.jfu);j.stage='Followed up';addEntry({title:'Followed up: '+j.t,skill:'biz_career',mode:'handson',points:1});toast('+1 φόρα');render()}));
+  v.querySelectorAll('[data-jpref]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.jpref;S.jobPrefs=S.jobPrefs.includes(k)?S.jobPrefs.filter(x=>x!==k):S.jobPrefs.concat(k);save();render()}));
+  v.querySelectorAll('[data-jstage]').forEach(s=>s.addEventListener('change',()=>{const j=S.jobs.find(x=>x.id===s.dataset.jstage);j.stage=s.value;if(['Interview','Offer','Started'].includes(s.value)){addEntry({title:s.value+': '+j.t,skill:'biz_career',mode:'handson',points:s.value==='Started'?5:3});toast('Nice. +φόρα')}else save();render()}));
+  const f=$('#jAdd');if(f)f.addEventListener('submit',e=>{e.preventDefault();apply(f.t.value.trim(),f.w.value.trim()||'Lexington area',null)})}
 /* ---------- bind ---------- */
 function bindView(){
-  const v=$('#view');bindWrite(v);bindSell(v);bindLife(v);bindCompact(v);
+  const v=$('#view');bindWrite(v);bindSell(v);bindJobs(v);bindLife(v);bindCompact(v);
   v.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>({think:openThink,feel:()=>openFeel(),inv:openInv,read:openRead,warm:openWarm,move:openMove,treat:openTreat,card:()=>openCard(cardOfDay().m.id),shelf:openCardShelf})[b.dataset.open]()));
   v.querySelectorAll('[data-gotab]').forEach(b=>b.addEventListener('click',()=>{document.querySelector(`.tabs [data-tab=${b.dataset.gotab}]`).click()}));
   v.querySelectorAll('[data-skill]').forEach(b=>b.addEventListener('click',()=>openSkill(b.dataset.skill)));
@@ -875,7 +915,7 @@ function bindView(){
   v.querySelectorAll('[data-quick]').forEach(x=>x.addEventListener('click',()=>quickLog(x.dataset.quick,x.dataset.mode,x.dataset.title)));
   const af=$('#addForm');if(af)af.addEventListener('submit',ev=>{ev.preventDefault();const f=new FormData(af);const e={title:f.get('title'),skill:f.get('skill'),mode:f.get('mode'),diff:+f.get('diff')};addEntry(e);toast(`+${pts(e)} φόρα`);render()});
   const ex=$('#exportBtn');if(ex)ex.addEventListener('click',()=>{const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='skill-tree-backup-'+today()+'.json';document.body.appendChild(a);a.click();a.remove();toast('Backup saved')});
-  const im=$('#importFile');if(im)im.addEventListener('change',async()=>{try{const d=JSON.parse(await im.files[0].text());if(!Array.isArray(d.entries))throw 0;S=Object.assign({entries:[],think:[],feelings:[],inventory:[],stars:{},focusTarget:10,chars:[],people:[],books:[],writing:[],drafts:[],blockHits:{},leads:[],sales:[],bizSteps:{},cardm:{},promises:[],clip:{goal:'',trades:[],offers:[]},identity:'',shelf:[],compacts:[],run:{week:0,logs:[]},treats:{cur:null,log:[],claimed:[]},sellPhone:'+18033990665'},d);save();renderHeader();render();toast('Backup restored')}catch(e){toast('That file is not a Skill Tree backup.')}});
+  const im=$('#importFile');if(im)im.addEventListener('change',async()=>{try{const d=JSON.parse(await im.files[0].text());if(!Array.isArray(d.entries))throw 0;S=Object.assign({entries:[],think:[],feelings:[],inventory:[],stars:{},focusTarget:10,chars:[],people:[],books:[],writing:[],drafts:[],blockHits:{},leads:[],sales:[],bizSteps:{},cardm:{},promises:[],clip:{goal:'',trades:[],offers:[]},identity:'',shelf:[],compacts:[],run:{week:0,logs:[]},treats:{cur:null,log:[],claimed:[]},jobs:[],jobPrefs:['q','c','p'],sellPhone:'+18033990665'},d);save();renderHeader();render();toast('Backup restored')}catch(e){toast('That file is not a Skill Tree backup.')}});
 }
 renderHeader();render();
 })();
