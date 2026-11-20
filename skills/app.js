@@ -907,7 +907,8 @@ function bindJobs(v){
   v.querySelectorAll('[data-jstage]').forEach(s=>s.addEventListener('change',()=>{const j=S.jobs.find(x=>x.id===s.dataset.jstage);j.stage=s.value;if(['Interview','Offer','Started'].includes(s.value)){addEntry({title:s.value+': '+j.t,skill:'biz_career',mode:'handson',points:s.value==='Started'?5:3});toast('Nice. +φόρα')}else save();render()}));
   const f=$('#jAdd');if(f)f.addEventListener('submit',e=>{e.preventDefault();apply(f.t.value.trim(),f.w.value.trim()||'Lexington area',null)})}
 /* ---------- workshop ---------- */
-function shopInit(){S.shop=S.shop||{projects:[]};if(!S.shop.seeded){S.shop.seeded=true;S.shop.projects.push(shopNew(SHOP.studio,'shop_build'))}}
+function shopInit(){S.shop=S.shop||{projects:[]};if(!S.shop.seeded){S.shop.seeded=true;S.shop.half=true;S.shop.projects.push(shopNew(SHOP.studio,'shop_build'))}
+  if(!S.shop.half){S.shop.half=true;const p=S.shop.projects.find(x=>x.name===SHOP.studio.name&&!x.done);if(p){const was=new Set(p.steps.filter(x=>x.done).map(x=>x.t));p.why=SHOP.studio.why;p.where=SHOP.studio.where;p.skill='shop_wood';p.steps=SHOP.studio.steps.map(t=>({t,done:was.has(t)}))}}}
 function shopNew(t,skill){return {id:uid(),name:t.name||t.n,why:t.why||t.w||'',where:t.where||'',skill:skill||'shop_wood',steps:(t.steps||t.s).map(x=>({t:x,done:false})),sessions:[],created:today(),done:''}}
 function shopNext(p){return p.steps.find(s=>!s.done)}
 function shopActive(){shopInit();return S.shop.projects.filter(p=>!p.done)}
