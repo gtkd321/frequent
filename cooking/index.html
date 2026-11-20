@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Frequent Cooking</title>
+<meta name="description" content="Make staple capsules ahead (rice, sauces, salmon) and build dishes from them: bowls, stir-fries and sushi. Free, no account, works offline.">
+<meta name="copyright" content="© 2026 Daniel Ilias Houlis. All rights reserved. Frequent is a trademark of Daniel Ilias Houlis.">
+<meta name="theme-color" content="#f5f1e8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cooking">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="icon.svg" alt="" width="26" height="26"><span><span class="fq">Frequent </span><b>Cooking</b></span></div>
+  <button class="mo" id="mo" aria-label="Momentum"><span class="mo-q">Got momentum?</span> <b id="moN">0</b></button>
+  <button class="menu-b" id="menuB" aria-label="Menu" aria-haspopup="true">⋯</button>
+</header>
+<div class="menu" id="menu" hidden>
+  <button data-act="obsidian">Export for Obsidian</button>
+  <button data-act="backup">Save a backup file</button>
+  <label class="file-b">Restore from a backup<input type="file" id="restore" accept="application/json,.json"></label>
+  <button data-act="about">How it works</button>
+</div>
+<div class="timers" id="timers" hidden aria-live="polite"></div>
+<main id="main" tabindex="-1"></main>
+<nav class="tabs" aria-label="Sections">
+  <button data-tab="today" class="on">Today</button>
+  <button data-tab="path">Path</button>
+  <button data-tab="history">History</button>
+</nav>
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastT"></span><button id="toastU" hidden>Undo</button></div>
+<script src="recipes.js?v=1"></script>
+<script src="app.js?v=1"></script>
+</body>
+</html>
