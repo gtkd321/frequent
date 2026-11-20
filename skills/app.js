@@ -52,7 +52,7 @@ function viewToday(){
   <article class="card up-next"><span class="eyebrow">Up next${doneToday[next]?' · done today':''}</span><h3>${P[next].t}</h3><p class="muted">${P[next].d}</p><div class="row" style="margin-top:var(--space-4)"><button class="btn" data-open="${P[next].fn}">${P[next].btn}</button></div></article>
   <div class="stats"><div class="stat"><b>${weekPts()}</b><span>φόρα this week</span></div><div class="stat"><b>${touched}/72</b><span>feelings touched</span></div><div class="stat"><b>${S.inventory.length}</b><span>inventories</span></div></div>
   ${warmCard()}
-  <div class="practice-row">${unMini()}${shopMini()}${jobMini()}${moveMini()}${treatMini()}${others.map(k=>`<button class="mini" data-open="${P[k].fn}"><span class="eyebrow">${doneToday[k]?'Done today':'Also today'}</span><h4>${P[k].t}</h4><p>${P[k].d}</p></button>`).join('')}
+  <div class="practice-row">${unMini()}${moneyMini()}${shopMini()}${jobMini()}${moveMini()}${treatMini()}${others.map(k=>`<button class="mini" data-open="${P[k].fn}"><span class="eyebrow">${doneToday[k]?'Done today':'Also today'}</span><h4>${P[k].t}</h4><p>${P[k].d}</p></button>`).join('')}
   ${(()=>{const sc=S.chars&&S.chars.length?staleChar():null;return `<button class="mini" data-gotab="write"><span class="eyebrow">Fiction</span><h4>${sc?'How is '+esc(sc.name)+' doing?':'Back to your story'}</h4><p>${sc?'A two-question check-in with your character.':'Add your first character and log a session.'}</p></button>`})()}
   ${(()=>{lifeInit();const d=S.promises.filter(p=>p.kind==='daily');const k=d.filter(p=>((p.log||{})[today()]||0)>=p.clips).length;return `<button class="mini" data-gotab="life"><span class="eyebrow">Life · ${d.length?k+' of '+d.length+' promises kept':'promises to self'}</span><h4>${S.clip.goal?'Trade up: '+esc(clipNow()):'The paper clip game'}</h4><p>${S.clip.goal?'Offer it to someone today.':'Trade one red paper clip up, one person at a time.'}</p></button>`})()}
   ${(()=>{const c=cardOfDay();const n=Object.keys(cardState()).length;return `<button class="mini card-mini" data-open="card">${cardIcon(c.m,44)}<span class="eyebrow">Index cards · ${c.done?'done today':n+' of '+CARD_METHODS.length+' tried'}</span><h4>${c.done?'Tomorrow: next method':esc(c.m.name)}</h4><p>${c.done?'You tried '+esc(c.m.name)+'. Tap to add notes.':esc(c.m.tag)}</p></button>`})()}
@@ -706,6 +706,7 @@ function viewLife(){lifeInit();
   <p class="lede">Promises to yourself and the person you’re growing into. Small, kept, every day.</p>
   <button class="identity" id="idEdit">${S.identity?`<span class="eyebrow">Who I’m becoming</span><span class="id-t">I am someone who ${esc(S.identity)}</span>`:'<span class="eyebrow">Who I’m becoming</span><span class="id-t muted">Finish the sentence: I am someone who…</span>'}</button>
   ${unHtml()}
+  ${moneyHtml()}
   <article class="card up-next">${game}</article>
   ${compactHtml()}
   ${shopHtml()}
@@ -1020,10 +1021,79 @@ function bindUnstuck(v){v.querySelectorAll('[data-un]').forEach(b=>b.addEventLis
   v.querySelectorAll('[data-nameit]').forEach(b=>b.addEventListener('click',ev=>{ev.stopPropagation();openNameIt(b.dataset.nameit)}));
   v.querySelectorAll('[data-shop]').forEach(b=>b.addEventListener('click',()=>openShop(b.dataset.shop)));
   const i=v.querySelector('#shopIdeas');i&&i.addEventListener('click',openShopIdeas);const l=v.querySelector('#shopLabor');l&&l.addEventListener('click',openLabor)}
+/* ---------- kitchen & money ---------- */
+function mnInit(){const D=MONEY.defaults;S.money=S.money||{};const M=S.money;M.prep=M.prep||[];M.ate=M.ate||[];M.moved=M.moved||[];M.moves=M.moves||{};M.outs=M.outs||[];
+  if(M.out==null)M.out=D.out;if(M.home==null)M.home=D.home;if(M.day==null)M.day=D.day;if(M.goal==null)M.goal=D.goal;return M}
+function mnWeek(){const d=new Date(today()+'T12:00:00');const j=new Date(d.getFullYear(),0,1);return Math.floor(((d-j)/864e5+j.getDay())/7)}
+function mnMenu(){return MONEY.menus[mnWeek()%MONEY.menus.length]}
+function mnAdd(ds,n){const d=new Date(ds+'T12:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+function mnStock(){const M=mnInit();const last=M.prep.filter(p=>daysSince(p.date)<=3).slice(-1)[0];
+  const fridge=last?Math.max(0,last.fridge-M.ate.filter(a=>a.from==='fridge'&&a.date>=last.date).length):0;
+  const freezer=Math.max(0,M.prep.reduce((s,p)=>s+(+p.freezer||0),0)-M.ate.filter(a=>a.from==='freezer').length);
+  return {fridge,freezer,eatBy:last?mnAdd(last.date,3):''}}
+function mnSv(a,M){return a.sv!=null?a.sv:Math.max(0,M.out-M.home)}
+function mnSave(){const M=mnInit();return M.ate.reduce((s,a)=>s+mnSv(a,M),0)}
+function mnMovedTo(k){return mnInit().moved.filter(m=>!k||m.to===k).reduce((s,m)=>s+(+m.amt||0),0)}
+function mnUnbanked(){return Math.max(0,mnSave()-mnMovedTo())}
+function mnMonth(){const M=mnInit(),m=today().slice(0,7);return M.ate.filter(a=>a.date.slice(0,7)===m).reduce((s,a)=>s+mnSv(a,M),0)}
+function mnPreppedThisWeek(){return mnInit().prep.some(p=>daysSince(p.date)<7)}
+function mnMealOut(){const M=mnInit();return Math.floor(M.ate.length/MONEY.mealOutEvery)-M.outs.length}
+function money$(n){return '$'+Math.round(n).toLocaleString()}
+function moneyMini(){const M=mnInit(),st=mnStock(),isDay=new Date().getDay()===M.day,u=mnUnbanked();
+  let eb,h,p;
+  if(isDay&&!mnPreppedThisWeek()){eb='Prep day';h=mnMenu().n;p='About 90 minutes. Five lunches, and the week is decided.'}
+  else if(st.fridge){eb='Kitchen & money · '+st.fridge+' in the fridge';h='Eat from the fridge today';p='Eat by '+fmtDate(st.eatBy)+'. Each one saves about '+money$(M.out-M.home)+'.'}
+  else if(st.freezer){eb='Kitchen & money · fridge empty';h=st.freezer+' meals in the freezer';p='Move one to the fridge tonight.'}
+  else {eb='Kitchen & money';h='The fridge is empty';p='Next prep: '+MONEY.days[M.day]+'. Or a 30-minute rescue prep now.'}
+  if(u>=25)p+=' '+money$(u)+' saved and not yet moved.';
+  return `<button class="mini" data-open="money"><span class="eyebrow">${esc(eb)}</span><h4>${esc(h)}</h4><p>${esc(p)}</p></button>`}
+function moneyHtml(){const M=mnInit(),st=mnStock(),u=mnUnbanked(),ef=mnMovedTo('ef'),mo=mnMealOut();const step=ef<500?0:ef<M.goal?1:2;const L=MONEY.ladder[step];
+  return `<h2 class="sub-title">Kitchen & money</h2><p class="small muted" style="margin-bottom:var(--space-3)">${esc(MONEY.note)} <a href="${MONEY.stat[1]}" target="_blank" rel="noopener">${esc(MONEY.stat[0])}</a></p>
+  <div class="stats"><div class="stat"><b>${st.fridge}</b><span>meals in the fridge</span></div><div class="stat"><b>${money$(mnMonth())}</b><span>saved this month</span></div><div class="stat"><b>${money$(mnMovedTo())}</b><span>moved to future you</span></div></div>
+  <div class="grid2" style="margin-top:var(--space-3)">
+   <button class="card" data-mn="prep"><span class="eyebrow">${mnPreppedThisWeek()?'Prepped this week':'Prep day · '+esc(MONEY.days[M.day])}</span><h4>${esc(mnMenu().n)}</h4><p class="small">${st.fridge?'Eat by '+esc(fmtDate(st.eatBy))+'.':'Log a prep session (+4).'} ${st.freezer?st.freezer+' in the freezer.':''}</p></button>
+   <button class="card" data-mn="pay"><span class="eyebrow">Pay future you · step ${step+1} of 3</span><h4>${u?money$(u)+' ready to move':esc(L.n)}</h4>${step<2?`<span class="bar"><i style="width:${Math.min(100,Math.round(100*ef/(step?M.goal:500)))}%"></i></span>`:''}<p class="small">${esc(L.n)}: ${money$(ef)} so far.</p></button></div>
+  <div class="row" style="margin-top:var(--space-3)"><button class="btn small" data-mn="ate">I ate a prepped meal (+1)</button><button class="btn ghost small" data-mn="moves">Money moves</button>${mo>0?'<button class="btn ghost small" data-mn="out">Meal out earned</button>':''}<button class="btn ghost small" data-mn="set">Settings</button></div>`}
+function openMoney(){const M=mnInit(),st=mnStock();if(new Date().getDay()===M.day&&!mnPreppedThisWeek()||!st.fridge&&!st.freezer){openPrep();return}openAte()}
+function openPrep(){const M=mnInit(),m=mnMenu();
+  openSheet('Prep day: '+m.n,`<div class="stack"><ul class="tight small"><li><b>Base:</b> ${esc(m.base)}</li><li><b>Protein:</b> ${esc(m.pro)}</li><li><b>Veg:</b> ${esc(m.veg)}</li><li><b>Fast-day pot:</b> ${esc(m.fast)}</li></ul>
+  <p class="xs muted">${esc(MONEY.fastNote)}</p>
+  <details><summary class="small">Shopping list</summary><ul class="tight small">${m.shop.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><button class="btn ghost small" id="pCopy">Copy list</button></details>
+  <details open><summary class="small">The flow</summary><ol class="tight small">${MONEY.flow.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></details>
+  <details><summary class="small">${esc(MONEY.quick.n)}</summary><ol class="tight small">${MONEY.quick.s.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></details>
+  <form class="form" id="pForm"><span class="small"><b>Log it</b></span><div class="row"><label class="f">Meals for the fridge<input type="number" name="fridge" min="0" max="12" value="5"></label><label class="f">For the freezer<input type="number" name="freezer" min="0" max="20" value="0"></label></div><button class="btn" type="submit">Prep done (+4)</button></form>
+  <p class="xs">${MONEY.safety.map(esc).join(' ')} <a href="${MONEY.safetySrc[1]}" target="_blank" rel="noopener">${esc(MONEY.safetySrc[0])}</a> · <a href="${MONEY.cooking[1]}" target="_blank" rel="noopener">${esc(MONEY.cooking[0])}</a></p></div>`);
+  $('#pCopy').addEventListener('click',()=>{try{navigator.clipboard.writeText(m.shop.join('\n'));toast('List copied')}catch(e){}});
+  $('#pForm').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));const fr=+f.fridge||0,fz=+f.freezer||0;const pt=fr+fz>=3?4:2;
+    M.prep.push({date:today(),fridge:fr,freezer:fz,menu:m.n});addEntry({title:'Prep day: '+m.n+' · '+(fr+fz)+' meals',skill:'money_prep',skill2:'food_bake',mode:'handson',points:pt});toast('+'+pt+' φόρα · the week is decided');closeSheet()})}
+function openAte(){const M=mnInit(),st=mnStock(),sv=Math.max(0,M.out-M.home);
+  openSheet('A prepped meal',`<div class="stack"><p class="small">Each one saves about ${money$(sv)}: ${money$(M.out)} out vs ${money$(M.home)} at home.</p>
+  <div class="row"><button class="btn" data-from="fridge"${st.fridge?'':' disabled'}>From the fridge (${st.fridge})</button><button class="btn ghost" data-from="freezer"${st.freezer?'':' disabled'}>From the freezer (${st.freezer})</button></div>
+  ${!st.fridge&&!st.freezer?'<button class="btn ghost small" id="aPrep">Nothing prepped. Open prep day</button>':''}${st.fridge?`<p class="xs muted">Eat by ${esc(fmtDate(st.eatBy))}.</p>`:''}</div>`);
+  $('#sheetBody').querySelectorAll('[data-from]').forEach(b=>b.addEventListener('click',()=>{M.ate.push({date:today(),from:b.dataset.from,sv});addEntry({title:'Ate a prepped meal · saved '+money$(sv),skill:'money_prep',skill2:'money_save',mode:'practice',points:1});
+    const u=mnUnbanked();toast('+1 φόρα · '+money$(u)+' ready to move');closeSheet();if(M.ate.length%MONEY.mealOutEvery===0)setTimeout(()=>toast('A planned meal out is earned'),2800)}));
+  const a=$('#aPrep');a&&a.addEventListener('click',openPrep)}
+function openPay(){const M=mnInit(),u=mnUnbanked(),ef=mnMovedTo('ef'),step=ef<500?0:ef<M.goal?1:2;
+  openSheet('Pay future you',`<div class="stack"><p class="small">Prepped meals have saved ${money$(mnSave())}. ${money$(u)} is still sitting in checking. Move it, then log it here.</p>
+  <ol class="tight small">${MONEY.ladder.map((l,i)=>`<li${i===step?' style="font-weight:600"':''}>${esc(l.n)}. ${esc(l.d)} <a href="${l.src[1]}" target="_blank" rel="noopener">${esc(l.src[0])}</a>${l.src2?` · <a href="${l.src2[1]}" target="_blank" rel="noopener">${esc(l.src2[0])}</a>`:''}</li>`).join('')}</ol>
+  <form class="form" id="payForm"><div class="row"><label class="f">Amount<input type="number" name="amt" min="1" step="1" required value="${Math.round(u)||''}"></label><label class="f">Where it went<select name="to"><option value="ef"${step<2?' selected':''}>Emergency fund</option><option value="ira"${step===2?' selected':''}>Roth IRA</option><option value="other">Other savings</option></select></label></div><button class="btn" type="submit">I moved it (+3)</button></form>
+  <p class="xs muted">The easiest version: an automatic weekly transfer. <a href="${MONEY.autoSrc[1]}" target="_blank" rel="noopener">${esc(MONEY.autoSrc[0])}</a>. ${esc(MONEY.disclaimer)}</p>
+  ${M.moved.length?`<details><summary class="small">History</summary>${M.moved.slice().reverse().map(x=>`<div class="xs">${esc(fmtDate(x.date))} · ${money$(x.amt)} · ${x.to==='ef'?'Emergency fund':x.to==='ira'?'Roth IRA':'Savings'}</div>`).join('')}</details>`:''}</div>`);
+  $('#payForm').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));const a=+f.amt;if(!a)return;M.moved.push({date:today(),amt:a,to:f.to});
+    addEntry({title:'Paid future me: '+money$(a)+(f.to==='ira'?' to the Roth IRA':f.to==='ef'?' to the emergency fund':' to savings'),skill:'money_invest',mode:'directed',points:3});toast('+3 φόρα · future you says thanks');closeSheet()})}
+function openMoves(){const M=mnInit();
+  openSheet('Money moves',`<div class="stack"><p class="small">One-time moves. Each one keeps paying after you do it once.</p>${MONEY.moves.map(m=>`<label class="step-row entry"><input type="checkbox" data-mv="${m.id}"${M.moves[m.id]?' checked disabled':''}><div><div class="entry-title small">${esc(m.t)}</div><div class="xs muted">${esc(m.w)}${M.moves[m.id]?' · done '+esc(fmtDate(M.moves[m.id])):''}</div></div></label>`).join('')}</div>`);
+  $('#sheetBody').querySelectorAll('[data-mv]').forEach(c=>c.addEventListener('change',()=>{if(!c.checked)return;const m=MONEY.moves.find(x=>x.id===c.dataset.mv);M.moves[m.id]=today();c.disabled=true;addEntry({title:'Money move: '+m.t,skill:'money_save',mode:'directed',points:2});toast('+2 φόρα')}))}
+function openMealOut(){const M=mnInit();openSheet('Meal out, earned',`<div class="stack"><p class="small">Every ${MONEY.mealOutEvery} prepped meals earns one planned meal out. Pick the place ahead, enjoy it, no guilt.</p><form class="form" id="moForm"><label class="f">Where<input type="text" name="w" maxlength="80"></label><button class="btn" type="submit">I took it</button></form></div>`);
+  $('#moForm').addEventListener('submit',ev=>{ev.preventDefault();M.outs.push({date:today(),where:new FormData(ev.target).get('w')||''});save();toast('Enjoy it');closeSheet()})}
+function openMoneySet(){const M=mnInit();openSheet('Kitchen & money settings',`<form class="form" id="msForm"><label class="f">A typical meal out costs<input type="number" name="out" min="1" value="${M.out}"></label><label class="f">A prepped meal costs<input type="number" name="home" min="0" value="${M.home}"></label>
+  <label class="f">Prep day<select name="day">${MONEY.days.map((d,i)=>`<option value="${i}"${i===M.day?' selected':''}>${d}</option>`).join('')}</select></label><label class="f">Emergency fund goal (3 to 6 months of basic costs)<input type="number" name="goal" min="500" step="100" value="${M.goal}"></label><button class="btn" type="submit">Save</button></form>`);
+  $('#msForm').addEventListener('submit',ev=>{ev.preventDefault();const f=Object.fromEntries(new FormData(ev.target));M.out=+f.out;M.home=+f.home;M.day=+f.day;M.goal=Math.max(500,+f.goal||500);save();closeSheet();render()})}
+function bindMoney(v){v.querySelectorAll('[data-mn]').forEach(b=>b.addEventListener('click',()=>({prep:openPrep,pay:openPay,ate:openAte,moves:openMoves,out:openMealOut,set:openMoneySet})[b.dataset.mn]()))}
 /* ---------- bind ---------- */
 function bindView(){
-  const v=$('#view');bindWrite(v);bindSell(v);bindJobs(v);bindLife(v);bindCompact(v);bindUnstuck(v);
-  v.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>({think:openThink,feel:()=>openFeel(),inv:openInv,read:openRead,warm:openWarm,move:openMove,treat:openTreat,shop:()=>openShop(),good:openGood,seen:openSeen,card:()=>openCard(cardOfDay().m.id),shelf:openCardShelf})[b.dataset.open]()));
+  const v=$('#view');bindWrite(v);bindSell(v);bindJobs(v);bindLife(v);bindCompact(v);bindUnstuck(v);bindMoney(v);
+  v.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>({think:openThink,feel:()=>openFeel(),inv:openInv,read:openRead,warm:openWarm,move:openMove,treat:openTreat,shop:()=>openShop(),money:openMoney,good:openGood,seen:openSeen,card:()=>openCard(cardOfDay().m.id),shelf:openCardShelf})[b.dataset.open]()));
   v.querySelectorAll('[data-gotab]').forEach(b=>b.addEventListener('click',()=>{document.querySelector(`.tabs [data-tab=${b.dataset.gotab}]`).click()}));
   v.querySelectorAll('[data-skill]').forEach(b=>b.addEventListener('click',()=>openSkill(b.dataset.skill)));
   v.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{logFilter=b.dataset.filter;render()}));
