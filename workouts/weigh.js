@@ -1,4 +1,4 @@
-// Frequent Workouts: weigh-ins. © 2026 Daniel Ilias Houlis. All rights reserved.
+// Frequent Workouts: weigh-ins. © 2026 Daniel Houlis. All rights reserved.
 // Three ways in: type one, import the file Fitdays+ exports, or open a link from an iPhone Shortcut.
 // Stored in S.weigh as { id, d, t, lb, bf?, bmi?, src }. Weight is kept in pounds.
 'use strict';

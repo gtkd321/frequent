@@ -1,4 +1,4 @@
-// Frequent Python. © 2026 Daniel Ilias Houlis. All rights reserved. Frequent is a trademark of Daniel Ilias Houlis.
+// Frequent Python. © 2026 Daniel Houlis. All rights reserved. Frequent is a trademark of Daniel Houlis.
 // Learn the words real Python uses most, five a day, with one small real project a week.
 // Progress lives in this browser (localStorage "fpy"). Updates only add to it; nothing is ever wiped.
 'use strict';
@@ -265,7 +265,7 @@ function code() {
 }
 
 function foot(m) {
-  m.append(h('p', { class: 'foot' }, 'Frequent Python, part of the Frequent series. Word ranks come from counting every token in Python ' + D.meta.python + "'s standard library (" + D.meta.files + ' files, ' + fmt(D.meta.tokens) + ' tokens). Python runs in your browser with Pyodide; nothing is sent anywhere. © 2026 Daniel Ilias Houlis. All rights reserved. Frequent™ is a trademark of Daniel Ilias Houlis.'));
+  m.append(h('p', { class: 'foot' }, 'Frequent Python, part of the Frequent series. Word ranks come from counting every token in Python ' + D.meta.python + "'s standard library (" + D.meta.files + ' files, ' + fmt(D.meta.tokens) + ' tokens). Python runs in your browser with Pyodide; nothing is sent anywhere. © 2026 Daniel Houlis. All rights reserved. Frequent™ is a trademark of Daniel Houlis.'));
 }
 
 // ---------- Menu: backup and restore (restore only adds, never erases) ----------

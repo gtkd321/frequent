@@ -1,4 +1,4 @@
-// Frequent Cooking recipes. © 2026 Daniel Ilias Houlis. All rights reserved. Frequent is a trademark of Daniel Ilias Houlis.
+// Frequent Cooking recipes. © 2026 Daniel Houlis. All rights reserved. Frequent is a trademark of Daniel Houlis.
 // The path builds outward: capsules (made ahead, kept in the fridge) feed the dishes after them.
 // kind: cap = capsule you make ahead, dish = a meal built from capsules.
 // needs = capsules a dish is built on. opt = capsules that make it better if you have them.

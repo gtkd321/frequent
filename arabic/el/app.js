@@ -236,9 +236,9 @@
   function about() {
     open(h('h3', {}, 'Σχετικά'), h('p', {}, 'Frequent Αραβικά: αραβικά του Λεβάντε (Λίβανος και Συρία, ομιλία της πόλης) για όσους μιλούν ελληνικά. Οι φράσεις ξεκινούν από αληθινές στιγμές, όχι από λίστες.'),
       h('p', { class: 'hint' }, `Έκδοση ${D.version}. ${D.scenes.length} σκηνές, ${ITEMS.filter(x => x.kind === 'p').length} φράσεις, ${ITEMS.filter(x => x.kind === 'w').length} λέξεις.`),
-      h('p', { class: 'hint' }, '© 2026 Daniel Ilias Houlis. All rights reserved. Greekquent™ and Frequent™ are trademarks of Daniel Ilias Houlis.'));
+      h('p', { class: 'hint' }, '© 2026 Daniel Houlis. All rights reserved. Greekquent™ and Frequent™ are trademarks of Daniel Houlis.'));
   }
-  const foot = () => h('p', { class: 'foot' }, '© 2026 Daniel Ilias Houlis. Frequent™. ', h('span', { lang: 'ar' }, 'منشوفك بعدين'), ' · τα λέμε.');
+  const foot = () => h('p', { class: 'foot' }, '© 2026 Daniel Houlis. Frequent™. ', h('span', { lang: 'ar' }, 'منشوفك بعدين'), ' · τα λέμε.');
 
   // ---------- Wiring ----------
   const TABS = { today: viewToday, scenes: viewScenes, words: viewWords, game: () => viewGame() };

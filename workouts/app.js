@@ -1,4 +1,4 @@
-// Frequent Workouts. © 2026 Daniel Ilias Houlis. All rights reserved. Frequent is a trademark of Daniel Ilias Houlis.
+// Frequent Workouts. © 2026 Daniel Houlis. All rights reserved. Frequent is a trademark of Daniel Houlis.
 // Log a set in one tap. Momentum grows most when you try something new: a new exercise or a new twist on one you know.
 // Everything lives in this browser (localStorage "fwo"). Updates only add to it; nothing is ever wiped.
 'use strict';
@@ -240,7 +240,7 @@ function today() {
     fav.length ? h('p', { class: 'hint', text: '+ Log repeats what you did last time. Tap a name to change weight, reps or the twist.' }) : null,
     todays.length ? h('h2', { text: `Today · ${todayN} logged` }) : null,
     todays.length ? entryList(todays.slice().reverse()) : null,
-    h('p', { class: 'foot' }, '© 2026 Daniel Ilias Houlis. Frequent™ is a trademark of Daniel Ilias Houlis. ', h('a', { href: '../', text: 'More Frequent apps' })));
+    h('p', { class: 'foot' }, '© 2026 Daniel Houlis. Frequent™ is a trademark of Daniel Houlis. ', h('a', { href: '../', text: 'More Frequent apps' })));
 }
 
 function entryList(list) {

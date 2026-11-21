@@ -1,4 +1,4 @@
-// Frequent Cooking. © 2026 Daniel Ilias Houlis. All rights reserved. Frequent is a trademark of Daniel Ilias Houlis.
+// Frequent Cooking. © 2026 Daniel Houlis. All rights reserved. Frequent is a trademark of Daniel Houlis.
 // Make capsules ahead, then build dishes from them. Momentum grows most for something new, and for every dish
 // that reuses a capsule you already made. Everything lives in this browser (localStorage "fck").
 'use strict';
@@ -119,7 +119,7 @@ function itemRow(r, kit = kitchen()) {
       ? h('button', { class: 'plus newb', type: 'button', 'aria-label': 'Open ' + r.n, onclick: () => sheet(r), text: 'Cook' })
       : h('button', { class: 'plus', type: 'button', 'aria-label': 'Log ' + r.n + ' again', onclick: () => quickLog(r), text: '+ Made' }));
 }
-const foot = () => h('p', { class: 'foot' }, '© 2026 Daniel Ilias Houlis. Frequent™ is a trademark of Daniel Ilias Houlis. Food-safety notes follow FDA and USDA guidance; they are not medical advice. ', h('a', { href: '../', text: 'More Frequent apps' }));
+const foot = () => h('p', { class: 'foot' }, '© 2026 Daniel Houlis. Frequent™ is a trademark of Daniel Houlis. Food-safety notes follow FDA and USDA guidance; they are not medical advice. ', h('a', { href: '../', text: 'More Frequent apps' }));
 
 // ---------- Today ----------
 function today() {
