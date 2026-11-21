@@ -1,4 +1,4 @@
-// Frequent Clear Quest. © 2026 Daniel Ilias Houlis. All rights reserved. Frequent is a trademark of Daniel Ilias Houlis.
+// Frequent Clear Quest. © 2026 Daniel Houlis. All rights reserved. Frequent is a trademark of Daniel Houlis.
 // Points come from things that leave the house, not from effort. Selling is split into six small steps with a
 // 14-day timer, so selling never keeps stuff in the room. Everything lives in this browser (localStorage "fcq").
 'use strict';
