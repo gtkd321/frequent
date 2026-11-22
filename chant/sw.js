@@ -1,6 +1,6 @@
 // Frequent Chant web app: works offline after the first visit. Network first for version.json, cache first for
 // everything else (file names carry the version, so a new release is fetched fresh). Only this app's cache is used.
-const CACHE = 'frequent-chant-psq-fe17e2d1';
+const CACHE = 'frequent-chant-psq-3a3d8fbf';
 // Other editions live in folders under this one and run their own worker. Leave their requests alone.
 const SKIP = ["intermediate/", "kids/"];
 const BASE = new URL('./', self.location).pathname;
