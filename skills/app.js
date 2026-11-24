@@ -52,7 +52,7 @@ function viewToday(){
   <article class="card up-next"><span class="eyebrow">Up next${doneToday[next]?' · done today':''}</span><h3>${P[next].t}</h3><p class="muted">${P[next].d}</p><div class="row" style="margin-top:var(--space-4)"><button class="btn" data-open="${P[next].fn}">${P[next].btn}</button></div></article>
   <div class="stats"><div class="stat"><b>${weekPts()}</b><span>φόρα this week</span></div><div class="stat"><b>${touched}/72</b><span>feelings touched</span></div><div class="stat"><b>${S.inventory.length}</b><span>inventories</span></div></div>
   ${warmCard()}
-  <div class="practice-row">${hallMini()}${unMini()}${moneyMini()}${shopMini()}${jobMini()}${moveMini()}${treatMini()}${others.map(k=>`<button class="mini" data-open="${P[k].fn}"><span class="eyebrow">${doneToday[k]?'Done today':'Also today'}</span><h4>${P[k].t}</h4><p>${P[k].d}</p></button>`).join('')}
+  <div class="practice-row">${hallMini()}${distillMini()}${unMini()}${moneyMini()}${shopMini()}${jobMini()}${moveMini()}${treatMini()}${others.map(k=>`<button class="mini" data-open="${P[k].fn}"><span class="eyebrow">${doneToday[k]?'Done today':'Also today'}</span><h4>${P[k].t}</h4><p>${P[k].d}</p></button>`).join('')}
   ${(()=>{const sc=S.chars&&S.chars.length?staleChar():null;return `<button class="mini" data-gotab="write"><span class="eyebrow">Fiction</span><h4>${sc?'How is '+esc(sc.name)+' doing?':'Back to your story'}</h4><p>${sc?'A two-question check-in with your character.':'Add your first character and log a session.'}</p></button>`})()}
   ${(()=>{lifeInit();const d=S.promises.filter(p=>p.kind==='daily');const k=d.filter(p=>((p.log||{})[today()]||0)>=p.clips).length;return `<button class="mini" data-gotab="life"><span class="eyebrow">Life · ${d.length?k+' of '+d.length+' promises kept':'promises to self'}</span><h4>${S.clip.goal?'Trade up: '+esc(clipNow()):'The paper clip game'}</h4><p>${S.clip.goal?'Offer it to someone today.':'Trade one red paper clip up, one person at a time.'}</p></button>`})()}
   ${(()=>{const c=cardOfDay();const n=Object.keys(cardState()).length;return `<button class="mini card-mini" data-open="card">${cardIcon(c.m,44)}<span class="eyebrow">Index cards · ${c.done?'done today':n+' of '+CARD_METHODS.length+' tried'}</span><h4>${c.done?'Tomorrow: next method':esc(c.m.name)}</h4><p>${c.done?'You tried '+esc(c.m.name)+'. Tap to add notes.':esc(c.m.tag)}</p></button>`})()}
@@ -707,6 +707,7 @@ function viewLife(){lifeInit();
   <button class="identity" id="idEdit">${S.identity?`<span class="eyebrow">Who I’m becoming</span><span class="id-t">I am someone who ${esc(S.identity)}</span>`:'<span class="eyebrow">Who I’m becoming</span><span class="id-t muted">Finish the sentence: I am someone who…</span>'}</button>
   ${unHtml()}
   ${hallHtml()}
+  ${distillHtml()}
   ${moneyHtml()}
   <article class="card up-next">${game}</article>
   ${compactHtml()}
@@ -1148,10 +1149,96 @@ function openHallSet(first){const H=hlInit();openSheet('Study hall setup',`<form
   <label class="f">Time (just a label)<input type="text" name="time" maxlength="20" placeholder="4:00 PM" value="${esc(H.time)}"></label><button class="btn" type="submit">Save</button></form>`);
   $('#hcForm').addEventListener('submit',ev=>{ev.preventDefault();const fd=new FormData(ev.target);H.meet=(fd.get('meet')||'').trim();H.days=fd.getAll('d').map(Number);H.time=(fd.get('time')||'').trim();save();closeSheet();render();if(first)openHall()})}
 function bindHall(v){v.querySelectorAll('[data-hl]').forEach(b=>b.addEventListener('click',()=>({go:openHall,set:()=>openHallSet(false)})[b.dataset.hl]()))}
+/* ---------- distill: how? down to a step, why? up to a maxim ---------- */
+function dsInit(){S.distill=S.distill||{};const D=S.distill;D.maxims=D.maxims||[];D.goals=D.goals||[];D.skip=D.skip||[];
+  if(!D.seeded){D.seeded=1;const sd=DISTILL.seed;const lib=dsLib(sd.maxim);D.maxims.push({id:sd.maxim,lib:sd.maxim,text:lib.text,lede:lib.lede,evidence:sd.evidence.map(t=>({text:t,date:today()})),created:today()});
+    if(!D.maxims.some(m=>m.id==='test')){const l=dsLib('test');D.maxims.push({id:'test',lib:'test',text:l.text,lede:l.lede,evidence:[],created:today()})}
+    D.goals.push({id:uid(),text:sd.goal.text,date:today(),maxims:sd.goal.maxims.slice(),rungs:sd.goal.rungs.map(t=>({t,done:false}))});save()}
+  return D}
+function dsLib(id){return DISTILL.maxims.find(m=>m.id===id)}
+const DS_STOP=new Set(DISTILL.stop.split(' '));
+function dsWords(t){return (t||'').toLowerCase().replace(/[’']/g,'').split(/[^a-z0-9]+/).filter(w=>w.length>2&&!DS_STOP.has(w))}
+function dsMax(id){return dsInit().maxims.find(m=>m.id===id)}
+function dsAllMax(){const D=dsInit();const own=D.maxims;const lib=DISTILL.maxims.filter(l=>!own.some(m=>m.lib===l.id||m.id===l.id)).map(l=>Object.assign({libOnly:1},l));return own.concat(lib)}
+function dsCues(m){const D=dsInit();const l=dsLib(m.lib||m.id);const c=new Set((l?l.cues:[]).concat(dsWords(m.text)));D.goals.filter(g=>g.maxims.includes(m.id)).forEach(g=>dsWords(g.text).forEach(w=>c.add(w)));return c}
+function dsMatch(text){const w=new Set(dsWords(text));return dsAllMax().map(m=>{const c=dsCues(m);let n=0;w.forEach(x=>{if(c.has(x)||[...c].some(y=>y.length>4&&(x.startsWith(y)||y.startsWith(x))))n++});return {m,n}}).filter(x=>x.n>0).sort((a,b)=>b.n-a.n)}
+function dsStrength(m){const D=dsInit();return (m.evidence||[]).length+D.goals.filter(g=>g.maxims.includes(m.id)).length}
+function dsLevel(n){let l='Hunch';DISTILL.levels.forEach(([k,t])=>{if(n>=k)l=t});return l}
+function dsCur(g){return g.rungs.findIndex(r=>!r.done)}
+function dsThreads(g){const D=dsInit(),w=new Set(dsWords(g.text));return D.goals.filter(o=>o.id!==g.id&&(o.maxims.some(x=>g.maxims.includes(x))||dsWords(o.text).some(x=>w.has(x))))}
+function dsIncoming(){const D=dsInit();const have=new Set(D.goals.map(g=>g.text.toLowerCase()).concat(D.skip));const out=[];
+  (S.promises||[]).filter(p=>p.kind==='once'&&!p.kept).forEach(p=>out.push(p.text));
+  if(S.shop&&S.shop.projects)S.shop.projects.filter(p=>!p.done).forEach(p=>out.push(p.name));
+  if(S.clip&&S.clip.goal)out.push(S.clip.goal);
+  return [...new Set(out.filter(Boolean))].filter(t=>!have.has(t.toLowerCase())).slice(0,4)}
+function dsActive(){return dsInit().goals.filter(g=>dsCur(g)>=0)}
+function distillMini(){const g=dsActive().slice(-1)[0];if(!g)return `<button class="mini" data-open="distill"><span class="eyebrow">Distill</span><h4>Shrink a big goal</h4><p>Ask how? until the step fits in today.</p></button>`;
+  const i=dsCur(g),m=dsMax(g.maxims[0]);return `<button class="mini" data-ds-go="${g.id}"><span class="eyebrow">Distill${m?' · '+esc(m.text):''}</span><h4>${esc(g.rungs[i].t)}</h4><p>Step ${i+1} of ${g.rungs.length} toward ${esc(g.text)}.</p></button>`}
+function distillHtml(){const D=dsInit();const own=D.maxims.slice().sort((a,b)=>dsStrength(b)-dsStrength(a));const inc=dsIncoming();
+  return `<h2 class="sub-title">Distill</h2><p class="small muted" style="margin-bottom:var(--space-3)">${esc(DISTILL.lede)}</p>
+  <div class="card"><span class="eyebrow">Your principles</span>${own.length?own.map(m=>{const n=dsStrength(m);const gs=D.goals.filter(g=>g.maxims.includes(m.id));return `<div class="ds-row"><div class="ds-t">${esc(m.text)}</div><div class="xs muted"><span>${dsLevel(n)} · shows up in ${n} place${n===1?'':'s'}</span></div>${gs.length?`<div class="chain">${gs.map(g=>`<span class="link-chip">${esc(g.text)}</span>`).join('')}</div>`:''}<div class="row" style="margin-top:var(--space-2)"><button class="btn ghost small" data-ds-apply="${m.id}">Apply it to something</button><button class="linkish xs" data-ds-ev="${m.id}">+ Where else I’ve seen it</button></div></div>`}).join(''):'<p class="small">None yet. Distill a goal and name the lesson.</p>'}</div>
+  ${D.goals.map(g=>{const i=dsCur(g);const th=dsThreads(g);return `<div class="card${i<0?' kept':''}" style="margin-top:var(--space-3)"><span class="eyebrow">${i<0?'Done':'Step '+(i+1)+' of '+g.rungs.length}${g.maxims.length?' · '+g.maxims.map(x=>(dsMax(x)||{}).text).filter(Boolean).map(esc).join(' · '):''}</span><h4>${esc(g.text)}</h4>
+   <div class="chain">${g.rungs.map((r,k)=>`<span class="link-chip${k===i?' now':''}${r.done?' done':''}">${esc(r.t)}</span>`).join('<span class="arr">→</span>')}</div>
+   ${i>=0?`<div class="row" style="margin-top:var(--space-3)"><button class="btn small" data-ds-done="${g.id}">Did it: ${esc(g.rungs[i].t.slice(0,40))}${g.rungs[i].t.length>40?'…':''} (+${i===g.rungs.length-1?5:1})</button><button class="btn ghost small" data-ds-shrink="${g.id}">Too big? Shrink it</button></div>`:''}
+   ${th.length?`<p class="xs muted" style="margin-top:var(--space-2)">Same thread as: ${th.map(o=>esc(o.text)).join(', ')}</p>`:''}<button class="linkish xs" data-ds-del="${g.id}">Remove</button></div>`}).join('')}
+  ${inc.length?`<div class="card" style="margin-top:var(--space-3)"><span class="eyebrow">Goals you’ve entered elsewhere</span>${inc.map(t=>{const mm=dsMatch(t)[0];return `<div class="ds-row"><div class="ds-t">${esc(t)}</div><div class="xs muted"><span>${mm?'Looks like: '+esc(mm.m.text):'No thread yet'}</span></div><div class="row"><button class="btn ghost small" data-ds-new="${esc(t)}">Distill it</button><button class="linkish xs" data-ds-skip="${esc(t)}">Not now</button></div></div>`}).join('')}</div>`:''}
+  <div class="row" style="margin-top:var(--space-3)"><button class="btn small" data-ds-new="">+ Distill a goal</button></div>
+  <p class="xs" style="margin-top:var(--space-2)">${DISTILL.src.map(x=>`<a href="${x[1]}" target="_blank" rel="noopener">${esc(x[0])}</a>`).join(' · ')}</p>`}
+function openDistill(pre){const st={text:pre||'',rungs:[]};
+  const one=()=>{openSheet('Distill: what do you want?',`<form class="form" id="dsA"><p class="small muted">Write it as big as it really is. We’ll shrink it next.</p><label class="f">The goal<input type="text" name="t" required maxlength="140" value="${esc(st.text)}" placeholder="Import my family’s olive oil"></label><button class="btn" type="submit">Next: how?</button></form>`);
+    $('#dsA').addEventListener('submit',ev=>{ev.preventDefault();st.text=ev.target.t.value.trim();if(st.text){st.match=dsMatch(st.text);two()}})};
+  const two=()=>{const top=st.match[0];const asks=(top?dsLib(top.m.lib||top.m.id)||dsLib('boring'):dsLib('boring')).ask.concat(dsLib('boring').ask);const q=asks[st.rungs.length%asks.length];const above=st.rungs.length?st.rungs[st.rungs.length-1]:st.text;
+    openSheet('Distill: how?',`<form class="form" id="dsB">${top?`<p class="small">This looks like <b>${esc(top.m.text)}</b>.</p>`:''}
+    <div class="chain"><span class="link-chip">${esc(st.text)}</span>${st.rungs.slice().reverse().map(r=>`<span class="arr">←</span><span class="link-chip">${esc(r)}</span>`).join('')}</div>
+    <label class="f">How? One size smaller than “${esc(above)}”<input type="text" name="r" required maxlength="120"></label><p class="xs muted">${esc(q)}</p>
+    <p class="small">${esc(DISTILL.today)}</p><div class="row"><button class="btn" type="submit" name="go" value="yes">Yes, I can do it today</button><button class="btn ghost" type="submit" name="go" value="no">No, go smaller</button></div></form>`);
+    const f=$('#dsB');let go='no';f.querySelectorAll('button[name=go]').forEach(b=>b.addEventListener('click',()=>{go=b.value}));
+    f.addEventListener('submit',ev=>{ev.preventDefault();const r=f.r.value.trim();if(!r)return;st.rungs.push(r);if(go==='yes'||st.rungs.length>=7)three();else two()})};
+  const three=()=>{const sug=st.match.map(x=>x.m);dsInit().maxims.forEach(m=>{if(!sug.includes(m))sug.push(m)});if(!sug.some(m=>m.id==='boring'))sug.push(dsLib('boring'));
+    openSheet('Distill: why?',`<form class="form" id="dsC"><p class="small">Why does starting with “${esc(st.rungs[st.rungs.length-1])}” make sense? Name the principle. The same one probably runs through other goals too.</p>
+    <div class="stack">${sug.slice(0,6).map((m,i)=>`<label class="chip-pick"><input type="checkbox" name="m" value="${m.id}"${i===0&&st.match.length?' checked':''}> ${esc(m.text)}${m.libOnly||!dsMax(m.id)?' <span class="xs muted">(new for you)</span>':' <span class="xs muted">· '+dsLevel(dsStrength(m))+'</span>'}</label>`).join('')}</div>
+    <label class="f">Or say it in your own words<input type="text" name="own" maxlength="80" placeholder="Sell something small"></label><button class="btn" type="submit">Save (+2)</button></form>`);
+    $('#dsC').addEventListener('submit',ev=>{ev.preventDefault();const fd=new FormData(ev.target);const D=dsInit();const ids=fd.getAll('m');
+      ids.forEach(id=>{if(!dsMax(id)){const l=dsLib(id);if(l)D.maxims.push({id,lib:id,text:l.text,lede:l.lede,evidence:[],created:today()})}});
+      const own=(fd.get('own')||'').trim();if(own){const ex=D.maxims.find(m=>m.text.toLowerCase()===own.toLowerCase());if(ex)ids.push(ex.id);else{const id=uid();D.maxims.push({id,text:own,lede:'',evidence:[],created:today()});ids.push(id)}}
+      const g={id:uid(),text:st.text,date:today(),maxims:[...new Set(ids)],rungs:st.rungs.slice().reverse().map(t=>({t,done:false})).concat([{t:st.text,done:false}])};D.goals.push(g);
+      addEntry({title:'Distilled: '+st.text+' → '+g.rungs[0].t,skill:'mind_distill',mode:'think',points:2});
+      const m=dsMax(g.maxims[0]);closeSheet();render();toast(m?m.text+' · '+dsLevel(dsStrength(m))+' ('+dsStrength(m)+')':'+2 φόρα')})};
+  one()}
+function openDsShrink(gid,step){const g=dsInit().goals.find(x=>x.id===gid);const i=dsCur(g);const m=dsMax(g.maxims[0]);const asks=((m&&dsLib(m.lib||m.id))||dsLib('boring')).ask;
+  openSheet('Shrink it',`<form class="form" id="dsS">${step?`<p class="small">${esc(step)}</p>`:''}<label class="f">One size smaller than “${esc(g.rungs[i].t)}”<input type="text" name="r" required maxlength="120"></label><p class="xs muted">${esc(asks[0])} ${esc(dsLib('boring').ask[0])}</p><button class="btn" type="submit">That’s the new next step</button></form>`);
+  $('#dsS').addEventListener('submit',ev=>{ev.preventDefault();const r=ev.target.r.value.trim();if(!r)return;g.rungs.splice(i,0,{t:r,done:false});save();closeSheet();render();toast('Smaller is better')})}
+function openDsApply(mid){const D=dsInit();const m=dsMax(mid)||dsLib(mid);const l=dsLib(m.lib||m.id);const asks=(l?l.ask:[]).concat(dsLib('boring').ask.slice(0,1));const act=dsActive();
+  openSheet('Apply: '+m.text,`<form class="form" id="dsP">${m.lede?`<p class="small muted">${esc(m.lede)}</p>`:''}
+  <label class="f">Where?<select name="g">${act.map(g=>`<option value="${g.id}">${esc(g.text)}</option>`).join('')}<option value="__new">Something new</option></select></label>
+  <label class="f" id="dsPn"${act.length?' hidden':''}>The goal or area<input type="text" name="area" maxlength="140" placeholder="Get my first chef client"></label>
+  <div class="card"><span class="eyebrow">Ask yourself</span><ol class="tight small">${asks.map(a=>`<li>${esc(a)}</li>`).join('')}</ol></div>
+  <label class="f">So my next specific step is…<input type="text" name="r" required maxlength="120"></label><button class="btn" type="submit">Make it the next step (+1)</button></form>`);
+  const f=$('#dsP');f.g.addEventListener('change',()=>{$('#dsPn').hidden=f.g.value!=='__new'});
+  f.addEventListener('submit',ev=>{ev.preventDefault();const r=f.r.value.trim();if(!r)return;if(!dsMax(m.id)&&l)D.maxims.push({id:l.id,lib:l.id,text:l.text,lede:l.lede,evidence:[],created:today()});
+    let g;if(f.g.value==='__new'){const a=f.area.value.trim();if(!a){toast('Name the goal first.');return}g={id:uid(),text:a,date:today(),maxims:[m.id],rungs:[{t:r,done:false},{t:a,done:false}]};D.goals.push(g)}
+    else{g=D.goals.find(x=>x.id===f.g.value);g.rungs.splice(dsCur(g),0,{t:r,done:false});if(!g.maxims.includes(m.id))g.maxims.push(m.id)}
+    addEntry({title:'Applied “'+m.text+'”: '+r,skill:'mind_distill',mode:'think',points:1});closeSheet();render();toast('+1 φόρα · principle made specific')})}
+function openDsEv(mid){const m=dsMax(mid);openSheet('Where else I’ve seen it',`<form class="form" id="dsE"><p class="small">${esc(m.text)}</p>${(m.evidence||[]).length?`<ul class="tight small">${m.evidence.map(e=>`<li>${esc(e.text)}</li>`).join('')}</ul>`:''}<label class="f">Another time this was true<input type="text" name="t" required maxlength="160"></label><button class="btn" type="submit">Add (+1)</button></form>`);
+  $('#dsE').addEventListener('submit',ev=>{ev.preventDefault();const t=ev.target.t.value.trim();if(!t)return;m.evidence=m.evidence||[];m.evidence.push({text:t,date:today()});addEntry({title:'Thread for “'+m.text+'”: '+t,skill:'mind_distill',mode:'think',points:1});closeSheet();render();toast(dsLevel(dsStrength(m))+' · '+dsStrength(m)+' places')})}
+function dsDone(gid){const D=dsInit();const g=D.goals.find(x=>x.id===gid);const i=dsCur(g);if(i<0)return;g.rungs[i].done=today();const last=i===g.rungs.length-1;
+  if(last){g.done=today();g.maxims.forEach(id=>{const m=dsMax(id);if(m){m.evidence=m.evidence||[];m.evidence.push({text:'Did it: '+g.text,date:today()})}});addEntry({title:'Reached the goal: '+g.text,skill:'mind_distill',skill2:'life_promise',mode:'handson',points:5});toast('Goal reached · +5 φόρα')}
+  else{addEntry({title:'Step done: '+g.rungs[i].t,skill:'mind_distill',mode:'handson',points:1});toast('+1 φόρα · next: '+g.rungs[i+1].t)}render()}
+function bindDistill(v){
+  v.querySelectorAll('[data-ds-new]').forEach(b=>b.addEventListener('click',()=>openDistill(b.dataset.dsNew)));
+  v.querySelectorAll('[data-ds-go]').forEach(b=>b.addEventListener('click',()=>{const g=dsInit().goals.find(x=>x.id===b.dataset.dsGo);const i=dsCur(g);
+    openSheet('Next step',`<div class="stack"><p class="small muted">Toward: ${esc(g.text)}</p><h3>${esc(g.rungs[i].t)}</h3><p class="small">${esc(DISTILL.today)}</p><div class="row"><button class="btn" id="dsY">Did it (+${i===g.rungs.length-1?5:1})</button><button class="btn ghost" id="dsN">Too big? Shrink it</button></div></div>`);
+    $('#dsY').addEventListener('click',()=>{closeSheet();dsDone(g.id)});$('#dsN').addEventListener('click',()=>openDsShrink(g.id))}));
+  v.querySelectorAll('[data-ds-done]').forEach(b=>b.addEventListener('click',()=>dsDone(b.dataset.dsDone)));
+  v.querySelectorAll('[data-ds-shrink]').forEach(b=>b.addEventListener('click',()=>openDsShrink(b.dataset.dsShrink)));
+  v.querySelectorAll('[data-ds-apply]').forEach(b=>b.addEventListener('click',()=>openDsApply(b.dataset.dsApply)));
+  v.querySelectorAll('[data-ds-ev]').forEach(b=>b.addEventListener('click',()=>openDsEv(b.dataset.dsEv)));
+  v.querySelectorAll('[data-ds-skip]').forEach(b=>b.addEventListener('click',()=>{dsInit().skip.push(b.dataset.dsSkip.toLowerCase());save();render()}));
+  v.querySelectorAll('[data-ds-del]').forEach(b=>b.addEventListener('click',()=>{if(confirm('Remove this goal?')){const D=dsInit();D.goals=D.goals.filter(g=>g.id!==b.dataset.dsDel);save();render()}}))}
 /* ---------- bind ---------- */
 function bindView(){
-  const v=$('#view');bindWrite(v);bindSell(v);bindJobs(v);bindLife(v);bindCompact(v);bindUnstuck(v);bindMoney(v);bindHall(v);
-  v.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>({think:openThink,feel:()=>openFeel(),inv:openInv,read:openRead,warm:openWarm,move:openMove,treat:openTreat,shop:()=>openShop(),money:openMoney,hall:openHall,good:openGood,seen:openSeen,card:()=>openCard(cardOfDay().m.id),shelf:openCardShelf})[b.dataset.open]()));
+  const v=$('#view');bindWrite(v);bindSell(v);bindJobs(v);bindLife(v);bindCompact(v);bindUnstuck(v);bindMoney(v);bindHall(v);bindDistill(v);
+  v.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>({think:openThink,feel:()=>openFeel(),inv:openInv,read:openRead,warm:openWarm,move:openMove,treat:openTreat,shop:()=>openShop(),money:openMoney,hall:openHall,distill:()=>openDistill(''),good:openGood,seen:openSeen,card:()=>openCard(cardOfDay().m.id),shelf:openCardShelf})[b.dataset.open]()));
   v.querySelectorAll('[data-gotab]').forEach(b=>b.addEventListener('click',()=>{document.querySelector(`.tabs [data-tab=${b.dataset.gotab}]`).click()}));
   v.querySelectorAll('[data-skill]').forEach(b=>b.addEventListener('click',()=>openSkill(b.dataset.skill)));
   v.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{logFilter=b.dataset.filter;render()}));
