@@ -243,3 +243,4 @@ ul.tight{margin:0;padding-left:1.2em;display:grid;gap:4px}
 
 .link-chip.done{text-decoration:line-through;opacity:.6}
 .ds-row{padding:var(--space-3) 0;border-top:1px solid var(--divider)}.ds-row:first-of-type{border-top:0;padding-top:var(--space-2)}.ds-t{font-weight:600}
+.bar-s{height:6px;border-radius:3px;background:var(--divider);overflow:hidden;margin-top:6px}.bar-s i{display:block;height:100%;background:var(--olive,#5b6b2f)}.st-big{text-align:center;padding:var(--space-4) 0}.st-count{font-family:var(--font-display);font-size:64px;line-height:1.1;margin:var(--space-3) 0}.wide-l{width:100%;text-align:left;justify-content:flex-start}

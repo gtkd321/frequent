@@ -52,7 +52,7 @@ function viewToday(){
   <article class="card up-next"><span class="eyebrow">Up next${doneToday[next]?' · done today':''}</span><h3>${P[next].t}</h3><p class="muted">${P[next].d}</p><div class="row" style="margin-top:var(--space-4)"><button class="btn" data-open="${P[next].fn}">${P[next].btn}</button></div></article>
   <div class="stats"><div class="stat"><b>${weekPts()}</b><span>φόρα this week</span></div><div class="stat"><b>${touched}/72</b><span>feelings touched</span></div><div class="stat"><b>${S.inventory.length}</b><span>inventories</span></div></div>
   ${warmCard()}
-  <div class="practice-row">${hallMini()}${distillMini()}${unMini()}${moneyMini()}${shopMini()}${jobMini()}${moveMini()}${treatMini()}${others.map(k=>`<button class="mini" data-open="${P[k].fn}"><span class="eyebrow">${doneToday[k]?'Done today':'Also today'}</span><h4>${P[k].t}</h4><p>${P[k].d}</p></button>`).join('')}
+  <div class="practice-row">${hallMini()}${startMini()}${distillMini()}${unMini()}${moneyMini()}${shopMini()}${jobMini()}${moveMini()}${treatMini()}${others.map(k=>`<button class="mini" data-open="${P[k].fn}"><span class="eyebrow">${doneToday[k]?'Done today':'Also today'}</span><h4>${P[k].t}</h4><p>${P[k].d}</p></button>`).join('')}
   ${(()=>{const sc=S.chars&&S.chars.length?staleChar():null;return `<button class="mini" data-gotab="write"><span class="eyebrow">Fiction</span><h4>${sc?'How is '+esc(sc.name)+' doing?':'Back to your story'}</h4><p>${sc?'A two-question check-in with your character.':'Add your first character and log a session.'}</p></button>`})()}
   ${(()=>{lifeInit();const d=S.promises.filter(p=>p.kind==='daily');const k=d.filter(p=>((p.log||{})[today()]||0)>=p.clips).length;return `<button class="mini" data-gotab="life"><span class="eyebrow">Life · ${d.length?k+' of '+d.length+' promises kept':'promises to self'}</span><h4>${S.clip.goal?'Trade up: '+esc(clipNow()):'The paper clip game'}</h4><p>${S.clip.goal?'Offer it to someone today.':'Trade one red paper clip up, one person at a time.'}</p></button>`})()}
   ${(()=>{const c=cardOfDay();const n=Object.keys(cardState()).length;return `<button class="mini card-mini" data-open="card">${cardIcon(c.m,44)}<span class="eyebrow">Index cards · ${c.done?'done today':n+' of '+CARD_METHODS.length+' tried'}</span><h4>${c.done?'Tomorrow: next method':esc(c.m.name)}</h4><p>${c.done?'You tried '+esc(c.m.name)+'. Tap to add notes.':esc(c.m.tag)}</p></button>`})()}
@@ -124,7 +124,7 @@ function viewPivots(){
 /* ---------- sheet ---------- */
 let sheetCleanup=null;
 function openSheet(title,html){$('#sheetTitle').textContent=title;$('#sheetBody').innerHTML=html;$('#sheetBody').scrollTop=0;$('#sheetWrap').hidden=false;document.body.style.overflow='hidden';bindSheet();setTimeout(()=>{const f=$('#sheetBody').querySelector('textarea,input,button');f&&f.focus()},50)}
-function closeSheet(){if(sheetCleanup){sheetCleanup();sheetCleanup=null}$('#sheetWrap').hidden=true;document.body.style.overflow='';render()}
+function closeSheet(){if(typeof stStop==='function')stStop();if(sheetCleanup){sheetCleanup();sheetCleanup=null}$('#sheetWrap').hidden=true;document.body.style.overflow='';render()}
 document.querySelectorAll('[data-close]').forEach(el=>el.addEventListener('click',closeSheet));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#sheetWrap').hidden)closeSheet()});
 function bindSheet(){const b=$('#sheetBody');b.querySelectorAll('[data-quick]').forEach(x=>x.addEventListener('click',()=>quickLog(x.dataset.quick,x.dataset.mode,x.dataset.title)));b.querySelectorAll('[data-star]').forEach(bindStar)}
@@ -707,6 +707,7 @@ function viewLife(){lifeInit();
   <button class="identity" id="idEdit">${S.identity?`<span class="eyebrow">Who I’m becoming</span><span class="id-t">I am someone who ${esc(S.identity)}</span>`:'<span class="eyebrow">Who I’m becoming</span><span class="id-t muted">Finish the sentence: I am someone who…</span>'}</button>
   ${unHtml()}
   ${hallHtml()}
+  ${startHtml()}
   ${distillHtml()}
   ${moneyHtml()}
   <article class="card up-next">${game}</article>
@@ -1235,10 +1236,71 @@ function bindDistill(v){
   v.querySelectorAll('[data-ds-ev]').forEach(b=>b.addEventListener('click',()=>openDsEv(b.dataset.dsEv)));
   v.querySelectorAll('[data-ds-skip]').forEach(b=>b.addEventListener('click',()=>{dsInit().skip.push(b.dataset.dsSkip.toLowerCase());save();render()}));
   v.querySelectorAll('[data-ds-del]').forEach(b=>b.addEventListener('click',()=>{if(confirm('Remove this goal?')){const D=dsInit();D.goals=D.goals.filter(g=>g.id!==b.dataset.dsDel);save();render()}}))}
+/* ---------- starting muscles ---------- */
+function stInit(){S.start=S.start||{};const T=S.start;T.reps=T.reps||{};T.log=T.log||[];T.dump=T.dump||[];return T}
+function stB(id){return START.blocks.find(b=>b.id===id)}
+function stLevel(id){return Math.min(5,Math.floor((stInit().reps[id]||0)/START.per)+1)}
+function stInto(id){const r=stInit().reps[id]||0;return r>=START.per*5?START.per:r%START.per}
+let stTimer=null;function stStop(){if(stTimer){clearInterval(stTimer);stTimer=null}}
+function stBeep(n){try{const a=new (window.AudioContext||window.webkitAudioContext)();for(let i=0;i<(n||1);i++){const o=a.createOscillator(),g=a.createGain();o.frequency.value=880;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.2,a.currentTime+i*.35);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+i*.35+.3);o.start(a.currentTime+i*.35);o.stop(a.currentTime+i*.35+.3)}}catch(e){}if(navigator.vibrate)navigator.vibrate(200)}
+function stClock(s){s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+function stFix(id,note,extra){const T=stInit();T.log.push(Object.assign({date:today(),b:id,kind:'fix',note:note||''},extra||{}));const b=stB(id);addEntry({title:b.fix+': '+(note||b.name),skill:'psych_start',mode:'practice',points:id==='reward'?2:1})}
+function startMini(){return `<button class="mini" data-open="start"><span class="eyebrow">Can’t start?</span><h4>Name what’s in the way</h4><p>Six quick fixes, one for each kind of stuck.</p></button>`}
+function startHtml(){const T=stInit();const tot=Object.values(T.reps).reduce((a,b)=>a+b,0);
+  return `<h2 class="sub-title">Starting muscles</h2><p class="small muted" style="margin-bottom:var(--space-3)">${esc(START.lede)}</p>
+  <div class="card">${START.blocks.map(b=>{const L=stLevel(b.id),n=stInto(b.id),done=(T.reps[b.id]||0)>=START.per*5;return `<div class="ds-row"><div class="ds-t">${esc(b.name)}</div><div class="xs muted">${esc(b.sci)} · level ${L} of 5 · ${done?'all levels done':n+' of '+START.per+' reps'}</div><div class="bar-s"><i style="width:${Math.round((done?1:n/START.per)*100)}%"></i></div><p class="small" style="margin:var(--space-1) 0">Next rep: ${esc(b.levels[L-1])}</p><div class="row"><button class="btn small" data-st-fix="${b.id}">${esc(b.fix)}</button><button class="btn ghost small" data-st-rep="${b.id}">I did the rep (+2)</button></div></div>`}).join('')}</div>
+  <p class="xs muted" style="margin-top:var(--space-2)">${tot} reps so far. ${START.blocks.map(b=>`<a href="${b.src[1]}" target="_blank" rel="noopener">${esc(b.src[0])}</a>`).join(' · ')}</p>`}
+function openStart(){stStop();openSheet('Can’t start?',`<div class="stack"><p class="small muted">What is in the way right now? Pick the closest one.</p>${START.blocks.map(b=>`<button class="btn ghost wide-l" data-st-pick="${b.id}"><b>${esc(b.name)}</b><span class="xs muted"> · ${esc(b.fix)}</span></button>`).join('')}</div>`);
+  $('#sheetBody').querySelectorAll('[data-st-pick]').forEach(x=>x.addEventListener('click',()=>openStFix(x.dataset.stPick)))}
+function stNext(){const D=typeof dsActive==='function'?dsActive().slice(-1)[0]:null;return D?D.rungs[dsCur(D)].t:''}
+function openStFix(id){stStop();({init:stInitFix,wm:stWm,decide:stDecide,reward:stReward,trans:stTrans,perfect:stPerfect})[id]()}
+function stHead(b){return `<p class="small">${esc(b.fixHow)}</p>${b.note?`<p class="xs muted">${esc(b.note)}</p>`:''}`}
+function stInitFix(){const b=stB('init');openSheet(b.fix,`<form class="form" id="stI">${stHead(b)}<label class="f">The task<input type="text" name="t" maxlength="100" value="${esc(stNext())}"></label><label class="f">The very first physical motion<input type="text" name="m" required maxlength="100" placeholder="Stand up and pick up the sponge"></label><button class="btn" type="submit">Count me down</button></form>`);
+  $('#stI').addEventListener('submit',ev=>{ev.preventDefault();const t=ev.target.t.value.trim(),m=ev.target.m.value.trim();let n=5;
+    const show=()=>{$('#sheetBody').innerHTML=`<div class="stack st-big"><p class="small muted">${esc(m)}</p><div class="st-count">${n>0?n:'Go'}</div></div>`};show();
+    stTimer=setInterval(()=>{n--;show();if(n<=0){stStop();stBeep(2);let s=120;const t0=Date.now();
+      $('#sheetBody').innerHTML=`<div class="stack st-big"><h3>${esc(m)}</h3><div class="st-count" id="stC">2:00</div><p class="small muted">You may stop when this hits zero. Keep going if you want.</p><button class="btn" id="stDone">I started (+1)</button></div>`;
+      $('#stDone').addEventListener('click',()=>{stStop();stFix('init',t||m,{secs:Math.round((Date.now()-t0)/1000)});closeSheet();render();toast('Started · +1 φόρα')});
+      stTimer=setInterval(()=>{s--;const c=$('#stC');if(!c){stStop();return}c.textContent=stClock(s);if(s<=0){stStop();stBeep(1);c.textContent='Free to stop'}},1000)}},1000)})}
+function stWm(){const b=stB('wm'),T=stInit();openSheet(b.fix,`<form class="form" id="stW">${stHead(b)}<label class="f">Everything in your head, one per line<textarea name="d" rows="7" required>${esc(T.dump.join('\n'))}</textarea></label><button class="btn" type="submit">Hide all but one</button></form>`);
+  $('#stW').addEventListener('submit',ev=>{ev.preventDefault();T.dump=ev.target.d.value.split('\n').map(x=>x.trim()).filter(Boolean);save();let done=0;
+    const one=()=>{if(!T.dump.length){closeSheet();render();toast('Head empty · '+done+' done');return}
+      $('#sheetBody').innerHTML=`<div class="stack st-big"><p class="xs muted">${T.dump.length} on the list. You only see this one.</p><h3>${esc(T.dump[0])}</h3><div class="row"><button class="btn" id="stWd">Done (+1)</button><button class="btn ghost" id="stWs">Not now, next</button><button class="btn ghost small" id="stWx">Stop here</button></div></div>`;
+      $('#stWd').addEventListener('click',()=>{const x=T.dump.shift();done++;stFix('wm',x);one()});
+      $('#stWs').addEventListener('click',()=>{T.dump.push(T.dump.shift());save();one()});
+      $('#stWx').addEventListener('click',()=>{save();closeSheet();render()})};one()})}
+function stDecide(){const b=stB('decide'),T=stInit();openSheet(b.fix,`<form class="form" id="stD">${stHead(b)}<label class="f">Options, one per line<textarea name="o" rows="5" required>${esc(T.dump.slice(0,6).join('\n'))}</textarea></label><button class="btn" type="submit">Pick for me</button></form>`);
+  $('#stD').addEventListener('submit',ev=>{ev.preventDefault();const o=ev.target.o.value.split('\n').map(x=>x.trim()).filter(Boolean);if(o.length<2){toast('Give it at least two.');return}
+    const pick=o[Math.floor(Math.random()*o.length)];
+    $('#sheetBody').innerHTML=`<div class="stack st-big"><p class="xs muted">The die picked</p><h3>${esc(pick)}</h3><p class="small">Do it for 10 minutes. Felt relief at a different one? Tap it: that was your answer.</p><div class="treat-pick">${o.filter(x=>x!==pick).map(x=>`<button class="chip-pick" data-alt="${esc(x)}">${esc(x)}</button>`).join('')}</div><button class="btn" id="stDk">Doing it (+1)</button></div>`;
+    const go=x=>{stFix('decide',x);closeSheet();render();toast('Decided · +1 φόρα')};
+    $('#stDk').addEventListener('click',()=>go(pick));$('#sheetBody').querySelectorAll('[data-alt]').forEach(x=>x.addEventListener('click',()=>go(x.dataset.alt)))})}
+function stReward(){const b=stB('reward');openSheet(b.fix,`<form class="form" id="stR">${stHead(b)}<label class="f">The task<input type="text" name="t" maxlength="100" value="${esc(stNext())}"></label><span class="small">Only while I do it</span><div class="treat-pick">${START.sweet.map((x,i)=>`<label class="chip-pick"><input type="radio" name="s" value="${esc(x)}"${i===0?' checked':''}> ${esc(x)}</label>`).join('')}</div><button class="btn" type="submit">Starting now (+2)</button>${typeof openTreat==='function'?'<button class="btn ghost small" type="button" id="stRt">Open Treats</button>':''}</form>`);
+  const rt=$('#stRt');if(rt)rt.addEventListener('click',()=>openTreat());
+  $('#stR').addEventListener('submit',ev=>{ev.preventDefault();const t=ev.target.t.value.trim(),s=ev.target.s.value;stFix('reward',(t||'Task')+' + '+s);closeSheet();render();toast('+2 φόρα for starting · enjoy the '+s.toLowerCase())})}
+function stTrans(){const b=stB('trans');openSheet(b.fix,`<form class="form" id="stT">${stHead(b)}<label class="f">What you’re doing now<input type="text" name="now" maxlength="80"></label><label class="f">What’s next<input type="text" name="nx" maxlength="80" value="${esc(stNext())}"></label><span class="small">Land in</span><div class="treat-pick">${[5,10,15,25].map((m,i)=>`<label class="chip-pick"><input type="radio" name="m" value="${m}"${i===1?' checked':''}> ${m} min</label>`).join('')}</div><button class="btn" type="submit">Start the landing</button><p class="xs muted">Keep this screen open. You’ll hear a beep at 5 minutes and 1 minute.</p></form>`);
+  $('#stT').addEventListener('submit',ev=>{ev.preventDefault();const f=ev.target,now=f.now.value.trim(),nx=f.nx.value.trim();const end=Date.now()+(+f.m.value)*60000;
+    $('#sheetBody').innerHTML=`<div class="stack st-big"><p class="xs muted">Landing from ${esc(now||'this')} into ${esc(nx||'the next thing')}</p><div class="st-count" id="stC"></div><p class="small" id="stM">Keep going. Nothing to do yet.</p><button class="btn ghost small" id="stTn">Land now</button></div>`;
+    let w5=false,w1=false;const land=()=>{stStop();stBeep(3);$('#sheetBody').innerHTML=`<form class="form" id="stP"><h3>Land</h3><label class="f">Parking line: where you stopped and what’s next there<input type="text" name="p" required maxlength="140"></label><ol class="tight small">${START.bridge.map(x=>`<li>${esc(x)}</li>`).join('')}</ol><p class="small">Then the first motion of: <b>${esc(nx||'the next thing')}</b></p><button class="btn" type="submit">Landed (+1)</button></form>`;
+      $('#stP').addEventListener('submit',e2=>{e2.preventDefault();stFix('trans',(now||'this')+' → '+(nx||'next'),{park:e2.target.p.value.trim()});closeSheet();render();toast('Landed · +1 φόρα')})};
+    const tick=()=>{const c=$('#stC');if(!c){stStop();return}const s=(end-Date.now())/1000;c.textContent=stClock(s);if(s<=300&&!w5){w5=true;stBeep(1);$('#stM').textContent='5 minutes. Start finding a stopping place.'}if(s<=60&&!w1){w1=true;stBeep(2);$('#stM').textContent='1 minute. Finish the sentence you are on.'}if(s<=0)land()};
+    tick();stTimer=setInterval(tick,1000);$('#stTn').addEventListener('click',land)})}
+function stPerfect(){const b=stB('perfect');openSheet(b.fix,`<form class="form" id="stF">${stHead(b)}<label class="f">The task<input type="text" name="t" required maxlength="100" value="${esc(stNext())}"></label><label class="f">What would a C+ version look like?<input type="text" name="c" maxlength="120" placeholder="Bullet points, no polish, typos allowed"></label><label class="f">How bad will it feel to do it at C+? (0 to 10)<input type="range" name="p" min="0" max="10" value="6"></label><span class="small">Timer</span><div class="treat-pick">${[10,15,25].map((m,i)=>`<label class="chip-pick"><input type="radio" name="m" value="${m}"${i===0?' checked':''}> ${m} min</label>`).join('')}</div><button class="btn" type="submit">Start the ugly draft</button></form>`);
+  $('#stF').addEventListener('submit',ev=>{ev.preventDefault();const f=ev.target,t=f.t.value.trim(),c=f.c.value.trim(),p=+f.p.value;let s=(+f.m.value)*60;
+    $('#sheetBody').innerHTML=`<div class="stack st-big"><p class="xs muted">C+ on purpose${c?': '+esc(c):''}</p><h3>${esc(t)}</h3><div class="st-count" id="stC">${stClock(s)}</div><button class="btn" id="stFd">Done</button></div>`;
+    const end=()=>{stStop();$('#sheetBody').innerHTML=`<form class="form" id="stF2"><h3>How bad was it really?</h3><p class="small muted">You guessed ${p} of 10.</p><label class="f">Actual (0 to 10)<input type="range" name="a" min="0" max="10" value="${Math.max(0,p-2)}"></label><button class="btn" type="submit">Log it (+1)</button></form>`;
+      $('#stF2').addEventListener('submit',e2=>{e2.preventDefault();const a=+e2.target.a.value;stFix('perfect',t,{pred:p,act:a});closeSheet();render();toast(a<p?'Easier than predicted by '+(p-a)+' · +1':'Logged · +1 φόρα')})};
+    stTimer=setInterval(()=>{s--;const el=$('#stC');if(!el){stStop();return}el.textContent=stClock(s);if(s<=0){stBeep(2);end()}},1000);$('#stFd').addEventListener('click',end)})}
+function stRep(id){const b=stB(id),L=stLevel(id);openSheet('Rep: '+b.sci,`<form class="form" id="stX"><p class="small">Level ${L}: <b>${esc(b.levels[L-1])}</b></p><label class="f">How it went (optional)<input type="text" name="n" maxlength="140"></label><button class="btn" type="submit">I did it (+2)</button></form>`);
+  $('#stX').addEventListener('submit',ev=>{ev.preventDefault();const T=stInit();T.reps[id]=(T.reps[id]||0)+1;T.log.push({date:today(),b:id,kind:'rep',lvl:L,note:ev.target.n.value.trim()});
+    addEntry({title:b.sci+' rep, level '+L+': '+b.levels[L-1],skill:'psych_start',mode:'handson',points:2});
+    const up=stLevel(id)>L;if(up)addEntry({title:b.sci+' muscle: level '+stLevel(id),skill:'psych_start',mode:'handson',points:5});
+    closeSheet();render();toast(up?'Level '+stLevel(id)+' · +7 φόρα':'+2 φόρα · '+stInto(id)+' of '+START.per)})}
+function bindStart(v){v.querySelectorAll('[data-st-fix]').forEach(b=>b.addEventListener('click',()=>openStFix(b.dataset.stFix)));v.querySelectorAll('[data-st-rep]').forEach(b=>b.addEventListener('click',()=>stRep(b.dataset.stRep)))}
 /* ---------- bind ---------- */
 function bindView(){
-  const v=$('#view');bindWrite(v);bindSell(v);bindJobs(v);bindLife(v);bindCompact(v);bindUnstuck(v);bindMoney(v);bindHall(v);bindDistill(v);
-  v.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>({think:openThink,feel:()=>openFeel(),inv:openInv,read:openRead,warm:openWarm,move:openMove,treat:openTreat,shop:()=>openShop(),money:openMoney,hall:openHall,distill:()=>openDistill(''),good:openGood,seen:openSeen,card:()=>openCard(cardOfDay().m.id),shelf:openCardShelf})[b.dataset.open]()));
+  const v=$('#view');bindWrite(v);bindSell(v);bindJobs(v);bindLife(v);bindCompact(v);bindUnstuck(v);bindMoney(v);bindHall(v);bindDistill(v);bindStart(v);
+  v.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>({think:openThink,feel:()=>openFeel(),inv:openInv,read:openRead,warm:openWarm,move:openMove,treat:openTreat,shop:()=>openShop(),money:openMoney,hall:openHall,distill:()=>openDistill(''),start:openStart,good:openGood,seen:openSeen,card:()=>openCard(cardOfDay().m.id),shelf:openCardShelf})[b.dataset.open]()));
   v.querySelectorAll('[data-gotab]').forEach(b=>b.addEventListener('click',()=>{document.querySelector(`.tabs [data-tab=${b.dataset.gotab}]`).click()}));
   v.querySelectorAll('[data-skill]').forEach(b=>b.addEventListener('click',()=>openSkill(b.dataset.skill)));
   v.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{logFilter=b.dataset.filter;render()}));
