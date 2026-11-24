@@ -23,9 +23,23 @@ const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 // ---------- Saved progress ----------
 const KEY = 'fcq';
 const ZONES0 = ['Studio desk', 'Studio floor', 'Bedroom floor', 'Bed and nightstand', 'Dresser top', 'Closet', 'Nerf: one container', 'Rockwool panels: finished or stored safely'];
-const blank = () => ({ v: 1, ev: [], sales: [], zones: ZONES0.map((n, i) => ({ id: 'z' + i, n, before: null, after: null, mom: null })), firstHidden: false });
+const blank = () => ({ v: 1, ev: [], sales: [], zones: ZONES0.map((n, i) => ({ id: 'z' + i, n, before: null, after: null, mom: null })), firstHidden: false, tasks: [] });
 let S = blank();
 try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && typeof s === 'object') S = Object.assign(blank(), s); } catch (e) { /* keep the old text untouched */ }
+// Clean wins: to-dos with small steps. Seeded once with the washer.
+const WASHER = { id: 'washer', n: 'Clean out the washing machine (no more odor)', why: 'The smell lives in the door seal, the detergent drawer and the drum. Clean those three, run one hot empty cycle, then let it dry.',
+  steps: [
+    { t: 'Empty it and sniff', small: 'Door seal, detergent drawer, drum. Where is the smell strongest?', p: 1 },
+    { t: 'Clean the detergent drawer', small: 'Pull it out, soak 10 minutes in hot soapy water, scrub with an old toothbrush. Wipe the slot it sits in.', p: 2 },
+    { t: 'Wipe the door seal or rim', small: 'Front loader: pull back the rubber seal and wipe inside every fold, including the bottom. Top loader: wipe under the lid and around the rim. Dry it.', p: 2 },
+    { t: 'Run one hot empty cycle', small: 'Clean Washer or Tub Clean if you have it, otherwise the hottest, longest cycle. Use the cleaner your manual names. Never mix bleach with vinegar.', p: 2 },
+    { t: 'Wipe the drum and seal dry', small: 'If you used bleach, run a Rinse and Spin so none reaches your next load.', p: 1 },
+    { t: 'Leave the door and drawer open to dry', small: 'Overnight is best. Then rest in that clean feeling.', p: 3, brave: true }],
+  keep: 'To keep it fresh: wipe the seal dry after each load, leave the door open, run the clean cycle once a month.',
+  src: [['Samsung', 'https://www.samsung.com/us/support/troubleshooting/TSG10007246/'], ['Whirlpool', 'https://producthelp.whirlpool.com/Laundry/Washers/Front_Load_Washers/Wash_Performance_or_Clothing_Results/Cleaning_and_Maintenance/Removing_Odors_or_Smells_-_Front_Load_Washer'], ['GE top loaders', 'https://products.geappliances.com/appliance/gea-support-search-content?contentId=16972']] };
+if (!Array.isArray(S.tasks)) S.tasks = [];
+if (!S.tasksSeeded) { S.tasksSeeded = true; S.tasks.unshift({ id: uid(), tpl: 'washer', n: WASHER.n, steps: WASHER.steps.map(() => null), done: null, start: ymd() }); }
+const tplOf = t => t.tpl === 'washer' ? WASHER : null;
 let saveT = 0;
 const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Could not save in this browser. Save a backup file from the menu.'); } }, 120); };
 
@@ -127,6 +141,8 @@ function today() {
       h('div', { class: 'rank' }, 'Rank ', h('b', { text: st.rank[1] }), st.next ? ` · ${plural(st.next[0] - st.total, 'more item')} to ${st.next[1]}` : ' · top rank',
         h('div', { class: 'bar' }, h('i', { style: `width:${Math.round(into / span * 100)}%` })))));
 
+  tasksCard(m);
+
   // First run checklist, derived from what has actually happened
   const o = outs();
   const firsts = [
@@ -159,6 +175,39 @@ function today() {
   if (os.length) m.append(h('section', { class: 'card' }, h('h2', { text: 'Sales in progress' }),
     os.map(s => h('div', { class: 'mini' }, h('span', {}, h('b', { text: s.n }), ` · step ${s.steps.filter(Boolean).length} of 6`), h('span', { class: 'left' + (daysLeft(s) <= 0 ? ' late' : ''), text: leftTxt(s) }))),
     h('button', { class: 'btn', type: 'button', style: 'margin-top:8px', text: 'Open the Sell tab', onclick: () => go_('sell') })));
+}
+
+// ---------- Clean wins ----------
+function taskStep(t, i, st) {
+  const on = !!t.steps[i];
+  return chk(on, `${i + 1}. ${st.t}`, st.small, `+${st.p}`, () => {
+    if (on) { const ev = S.ev.filter(e => e.k === 'task' && e.task === t.id && e.i === i).pop(); if (ev) S.ev = S.ev.filter(x => x !== ev); t.steps[i] = null; t.done = null; save(); paintMo(); render(); return; }
+    t.steps[i] = ymd(); const all = t.steps.every(Boolean); if (all) t.done = ymd();
+    addEv({ k: 'task', task: t.id, i, n: `${t.n}: ${st.t.toLowerCase()}`, p: st.p }, all ? `+${st.p} momentum · done. Rest in that clean feeling.` : `+${st.p} momentum`, () => { t.steps[i] = null; t.done = null; });
+  }, st.brave);
+}
+function tasksCard(m) {
+  const open = S.tasks.filter(t => !t.done), recent = S.tasks.filter(t => t.done && daysBetween(t.done, ymd()) < 2);
+  const sec = h('section', { class: 'card' }, h('h2', { text: 'Clean wins' }), h('p', { class: 'hint', text: 'One task at a time. Finish it, then rest in the clean feeling.' }));
+  for (const t of open.concat(recent)) {
+    const T = tplOf(t);
+    if (T) {
+      const n = t.steps.filter(Boolean).length;
+      sec.append(h('div', { class: 'task' }, h('h3', { text: t.n }), h('p', { class: 'hint', text: t.done ? 'Done ' + niceDay(t.done).toLowerCase() + '. ' + T.keep : `${n} of ${T.steps.length} · ${T.why}` }),
+        h('div', { class: 'bar' }, h('i', { style: `width:${Math.round(n / T.steps.length * 100)}%` })),
+        t.done ? null : T.steps.map((st, i) => taskStep(t, i, st)),
+        h('p', { class: 'hint', style: 'margin-top:6px' }, 'Steps from ', T.src.map((x, i) => [i ? ', ' : '', h('a', { href: x[1], target: '_blank', rel: 'noopener', text: x[0] })]), '. Check your manual first.')));
+    } else {
+      sec.append(chk(!!t.done, t.n, t.done ? 'Done ' + niceDay(t.done).toLowerCase() : null, '+1', () => {
+        if (t.done) { const ev = S.ev.filter(e => e.k === 'task' && e.task === t.id).pop(); if (ev) S.ev = S.ev.filter(x => x !== ev); t.done = null; save(); paintMo(); render(); return; }
+        t.done = ymd(); addEv({ k: 'task', task: t.id, n: t.n, p: 1 }, '+1 momentum', () => { t.done = null; });
+      }));
+    }
+  }
+  if (!open.length && !recent.length) sec.append(h('div', { class: 'empty', text: 'All clear. Add the next one.' }));
+  const ni = h('input', { class: 'inp', type: 'text', placeholder: 'Add a to-do, e.g. Wipe the bathroom mirror', 'aria-label': 'New to-do', maxlength: '80' });
+  sec.append(h('div', { class: 'qrow', style: 'margin-top:10px' }, ni, h('button', { class: 'btn', type: 'button', text: 'Add', onclick: () => { const n = ni.value.trim(); if (!n) return; S.tasks.push({ id: uid(), n, done: null, start: ymd() }); save(); render(); } })));
+  m.append(sec);
 }
 
 // ---------- Sell ----------
@@ -277,7 +326,7 @@ function history() {
     m.append(h('div', { class: 'day' }, h('h3', {}, niceDay(d), h('span', { text: n ? plural(n, 'item') + ' out' : '' })),
       h('div', { class: 'list' }, list.slice().reverse().map(e => h('div', { class: 'ent' },
         h('div', { class: 'what' }, e.k === 'out' ? `${e.n}` : e.n, e.k === 'out' ? h('span', { class: 'tag ' + (e.route === 'sell' ? 't' : 'n'), text: ROUTES[e.route] }) : null,
-          h('small', { text: e.k === 'out' ? `${plural(e.c, 'item')}${e.g ? ' · $' + e.g : ''}` : e.k === 'step' ? 'Sell step' : e.k === 'start' ? 'Sale started' : 'Zone proof' })),
+          h('small', { text: e.k === 'out' ? `${plural(e.c, 'item')}${e.g ? ' · $' + e.g : ''}` : e.k === 'step' ? 'Sell step' : e.k === 'start' ? 'Sale started' : e.k === 'task' ? 'Clean win' : 'Zone proof' })),
         h('span', { class: 'pts', text: e.p ? '+' + e.p : '' }),
         e.k === 'out' && !e.sale ? h('button', { class: 'x', type: 'button', 'aria-label': 'Remove ' + e.n, text: '×', onclick: () => { S.ev = S.ev.filter(x => x !== e); save(); paintMo(); render(); toast('Removed', () => { S.ev.push(e); S.ev.sort((a, c) => a.t - c.t); save(); paintMo(); render(); }); } }) : null)))));
   }
@@ -294,6 +343,7 @@ function restore(file) {
     if (!b || !Array.isArray(b.ev)) throw 0;
     const ids = new Set(S.ev.map(e => e.id)); for (const e of b.ev) if (e && e.id && !ids.has(e.id)) S.ev.push(e);
     S.ev.sort((a, c) => a.t - c.t);
+    const tids = new Set(S.tasks.map(x => x.id)); for (const x of b.tasks || []) if (!tids.has(x.id)) S.tasks.push(x);
     const sids = new Set(S.sales.map(s => s.id)); for (const s of b.sales || []) if (!sids.has(s.id)) S.sales.push(s);
     for (const z of b.zones || []) { const mine = S.zones.find(x => x.id === z.id); if (!mine) S.zones.push(z); else for (const k of ['before', 'after', 'mom']) if (!mine[k] && z[k]) mine[k] = z[k]; }
     save(); paintMo(); render(); toast('Backup added. Nothing was erased.');
