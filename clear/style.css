@@ -248,3 +248,9 @@ textarea.inp { resize: vertical; }
 .done-all { text-align: center; padding: 6px 0 2px; color: var(--green); font-weight: 600; }
 .mv .ex .name span { white-space: normal; }
 .mv .ex .name span.tag { display: inline-block; margin-left: 8px; vertical-align: 2px; }
+.ant-deck { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.ant-card { text-align: left; border: 1px solid var(--line); border-radius: var(--r); background: var(--paper); padding: 14px; min-height: 120px; box-shadow: 0 1px 0 var(--line); transition: background .2s; }
+.ant-card.flipped { background: color-mix(in srgb, var(--green) 10%, var(--paper)); border-color: color-mix(in srgb, var(--green) 40%, var(--line)); }
+.ant-card .k { font-size: 12px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.ant-card.flipped .k { color: var(--green); }
+.ant-t { margin: 0; font-size: 17px; font-weight: 500; line-height: 1.35; }

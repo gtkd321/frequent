@@ -284,7 +284,7 @@ function history() {
 }
 
 // ---------- Mind: short exercises for the part of clutter that lives in your head ----------
-const blankMind = () => ({ circle: [], worries: [], ready: {}, talks: {}, pace: 5, seen: [] });
+const blankMind = () => ({ ants: [], circle: [], worries: [], ready: {}, talks: {}, pace: 5, seen: [] });
 S.mind = Object.assign(blankMind(), S.mind || {});
 const READY = ['Water: 1 gallon per person per day, for several days', 'Several days of non-perishable food', 'Manual can opener', 'Flashlight', 'Extra batteries', 'Battery or hand-crank radio', 'First aid kit', 'Prescription medicines', 'Phone charger and backup battery', 'Whistle', 'Dust masks', 'Wipes, garbage bags and ties', 'Wrench or pliers for utilities', 'Local maps', 'Some cash', 'Copies of important papers in a waterproof bag'];
 const TALKS = ['Which three things in the house matter most to you?', 'Is there anything you would like a particular person to have someday?', 'What would you be glad to see go now?', 'Which room or spot bugs you the most?', 'Where are the important papers kept?', 'Would you like help with one closet this month?'];
@@ -427,7 +427,52 @@ function flowSheet() {
   paint();
 }
 
+const ANT_TYPES = [['All-or-nothing', 'always, never, everything'], ['Fortune telling', 'predicting the worst'], ['Just the bad', 'missing the good'], ['Less than', 'comparing yourself'], ['Labeling', 'harsh names'], ['Guilt beating', 'should, must'], ['Mind reading', 'guessing what others think'], ['If only', 'arguing with past or future'], ['Blaming', 'it is all on someone else']];
+function antCard(a, n) {
+  let flip = false;
+  const face = h('div', { class: 'ant-face' });
+  const paint = () => face.replaceChildren(...[h('p', { class: 'k', text: flip ? 'Turned around' : `Thought #${n}` }), h('p', { class: 'ant-t', text: flip ? (a.turn || 'No turnaround yet') : a.t }),
+    flip && a.ev ? h('p', { class: 'hint', style: 'margin:6px 0 0', text: 'Because: ' + a.ev }) : null,
+    !flip && a.types && a.types.length ? h('p', { class: 'hint', style: 'margin:6px 0 0', text: a.types.join(' · ') }) : null].filter(Boolean));
+  paint();
+  return h('button', { class: 'ant-card' + (a.turn ? '' : ' plain'), type: 'button', 'aria-label': `Flip thought ${n}`, onclick: e => { flip = !flip; e.currentTarget.classList.toggle('flipped', flip); paint(); } }, face);
+}
+function antSheet() {
+  const n = S.mind.ants.length + 1;
+  const [l1, t] = field('The thought, word for word', 'e.g. This house will always be cluttered.', 2);
+  const types = new Set();
+  const chips = h('div', { class: 'chips' }, ANT_TYPES.map(([k, d]) => h('button', { class: 'chip', type: 'button', title: d, text: k, 'aria-pressed': 'false', onclick: e => { types.has(k) ? types.delete(k) : types.add(k); e.currentTarget.classList.toggle('on'); e.currentTarget.setAttribute('aria-pressed', types.has(k)); } })));
+  const yn = (q, opts) => { let v = ''; const row = h('div', { class: 'chips' }, opts.map(o => h('button', { class: 'chip', type: 'button', text: o, onclick: e => { v = o; row.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === e.currentTarget)); } }))); row.get = () => v; return [lab(q), row]; };
+  const q1 = yn('1. Is it true?', ['Yes', 'No', 'Not sure']), q2 = yn('2. Is it 100% true, every time, forever?', ['Yes', 'No']);
+  const [l3, feel] = field('3. How do I feel and act when I believe it?', 'e.g. Heavy. I stop trying.', 2);
+  const [l4, without] = field('4. How would I feel and act without it?', 'e.g. Lighter. I would do one sprint.', 2);
+  const [l5, turn] = field('5. Turn it around: the exact opposite', 'e.g. This house will not always be cluttered.', 2);
+  const [l6, ev] = field('Why the opposite might be as true, or truer', 'e.g. I have seen it get clean fast in sprints.', 2);
+  const err = h('p', { class: 'hint', style: 'color:var(--red);margin:6px 0 0' });
+  openSheet('Thought test',
+    h('p', { class: 'sh-cue', text: "Dr. Daniel Amen's version of Byron Katie's questions. Not positive thinking, accurate thinking. If a thought turns out true, it's a plan to make, not a feeling to fight." }),
+    l1, t, lab('What kind of thought? (optional)'), chips, ...q1, ...q2, l3, feel, l4, without, l5, turn, l6, ev, err,
+    h('div', { style: 'margin-top:14px' }, h('button', { class: 'btn go wide', type: 'button', text: `Save thought #${n}`, onclick: () => {
+      if (!t.value.trim() || !turn.value.trim()) { err.textContent = 'Write the thought and its turnaround at least.'; return; }
+      S.mind.ants.push({ id: uid(), d: ymd(), t: t.value.trim(), types: [...types], q1: q1[1].get(), q2: q2[1].get(), feel: feel.value.trim(), without: without.value.trim(), turn: turn.value.trim(), ev: ev.value.trim() });
+      closeSheet(); mindDone('ant', `Tested thought #${n}`);
+    } })),
+    h('p', { class: 'src', style: 'margin-top:12px' }, 'Questions from ', h('a', { href: 'https://www.amenclinics.com/blog/number-one-habit-develop-order-feel-positive/', target: '_blank', rel: 'noopener', text: 'Amen Clinics' }), ', based on Byron Katie, Loving What Is.'));
+  t.focus();
+}
+function antsDeck() {
+  const a = S.mind.ants, n = a.length;
+  const goal = n < 30 ? 30 : 100;
+  return h('section', { class: 'card', style: 'margin-top:14px' },
+    h('div', { class: 'row', style: 'justify-content:space-between;align-items:baseline' }, h('h3', { style: 'margin:0', text: 'Thought cards' }), h('span', { class: 'hint', text: `${n} of ${goal}` })),
+    h('div', { class: 'bar', style: 'margin:8px 0 6px' }, h('i', { style: `width:${Math.min(100, Math.round(n / goal * 100))}%` })),
+    h('p', { class: 'hint', style: 'margin:0 0 10px', text: n === 0 ? 'Write down your worst thoughts and test them one at a time. Dr. Amen says by about 30, they stop bothering you.' : n < 30 ? `${30 - n} more to 30, where they tend to stop bothering you. Tap a card to flip it.` : 'Past 30. Keep going toward 100. Tap a card to flip it.' }),
+    n ? h('div', { class: 'ant-deck' }, a.slice().reverse().slice(0, 12).map((x, i) => antCard(x, n - i))) : null,
+    h('button', { class: 'btn go', type: 'button', style: 'margin-top:10px', text: n ? 'Test another thought' : 'Test your first thought', onclick: antSheet }),
+    n > 12 ? h('p', { class: 'hint', style: 'margin:8px 0 0', text: `Showing the newest 12 of ${n}.` }) : null);
+}
 const MOVES = [
+  { id: 'ant', t: 'Thought test', d: 'Write a worst thought, ask five questions, turn it around.', run: antSheet },
   { id: 'see', t: 'See one small change', d: 'One minute picturing one clear surface, then do just that.', run: seeSheet },
   { id: 'circle', t: 'Circle of control', d: 'Mine to decide, ours to talk about, or not mine to carry.', run: circleSheet },
   { id: 'worry', t: 'Worry check', d: 'Worst, best and most likely. Then one small step.', run: worrySheet },
@@ -442,6 +487,7 @@ function mind() {
   m.append(h('h1', { text: 'Mind' }), h('p', { class: 'sub', text: 'Short exercises for the part of clutter that lives in your head. Each one is +1 momentum.' }),
     h('section', { class: 'new' }, h('p', { class: 'k', text: "Today's move" }), h('h3', { text: pick.t }), h('p', { class: 'cue', text: pick.d }),
       h('button', { class: 'btn green', type: 'button', text: doneToday.has(pick.id) ? 'Do it again' : 'Start', onclick: pick.run })),
+    antsDeck(),
     h('h2', { text: 'All moves' }),
     h('div', { class: 'list mv' }, MOVES.map(x => h('div', { class: 'ex' }, h('button', { class: 'name', type: 'button', 'data-move': x.id, onclick: x.run }, h('b', {}, x.t, doneToday.has(x.id) ? h('span', { class: 'tag n', text: 'Done today' }) : null), h('span', { text: x.d }))))),
     h('p', { class: 'foot' }, 'If worry about the future or the house takes up a lot of your day, a therapist trained in CBT can help. The ', h('a', { href: 'https://hoarding.iocdf.org/about-hoarding/how-is-hoarding-disorder-treated/', target: '_blank', rel: 'noopener', text: 'IOCDF' }), ' explains how that works.'));
@@ -460,7 +506,7 @@ function restore(file) {
     S.ev.sort((a, c) => a.t - c.t);
     const sids = new Set(S.sales.map(s => s.id)); for (const s of b.sales || []) if (!sids.has(s.id)) S.sales.push(s);
     for (const z of b.zones || []) { const mine = S.zones.find(x => x.id === z.id); if (!mine) S.zones.push(z); else for (const k of ['before', 'after', 'mom']) if (!mine[k] && z[k]) mine[k] = z[k]; }
-    if (b.mind) { for (const k of ['circle', 'worries', 'seen']) { const ids = new Set(S.mind[k].map(x => x.id)); for (const x of b.mind[k] || []) if (!ids.has(x.id)) S.mind[k].push(x); }
+    if (b.mind) { for (const k of ['ants', 'circle', 'worries', 'seen']) { const ids = new Set(S.mind[k].map(x => x.id)); for (const x of b.mind[k] || []) if (!ids.has(x.id)) S.mind[k].push(x); }
       Object.assign(S.mind.ready, b.mind.ready || {}); for (const [i, v] of Object.entries(b.mind.talks || {})) if (!S.mind.talks[i]) S.mind.talks[i] = v; }
     save(); paintMo(); render(); toast('Backup added. Nothing was erased.');
   }).catch(() => toast('That file is not a Clear Quest backup.'));
