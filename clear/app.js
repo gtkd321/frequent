@@ -1,4 +1,4 @@
-// Frequent Clear Quest. © 2026 Daniel Houlis. All rights reserved. Frequent is a trademark of Daniel Houlis.
+// Frequent Clear Quest. © 2026 Daniel Ilias Houlis. All rights reserved. Frequent is a trademark of Daniel Ilias Houlis.
 // Points come from things that leave the house, not from effort. Selling is split into six small steps with a
 // 14-day timer, so selling never keeps stuff in the room. Everything lives in this browser (localStorage "fcq").
 'use strict';
@@ -23,23 +23,9 @@ const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 // ---------- Saved progress ----------
 const KEY = 'fcq';
 const ZONES0 = ['Studio desk', 'Studio floor', 'Bedroom floor', 'Bed and nightstand', 'Dresser top', 'Closet', 'Nerf: one container', 'Rockwool panels: finished or stored safely'];
-const blank = () => ({ v: 1, ev: [], sales: [], zones: ZONES0.map((n, i) => ({ id: 'z' + i, n, before: null, after: null, mom: null })), firstHidden: false, tasks: [] });
+const blank = () => ({ v: 1, ev: [], mind: null, sales: [], zones: ZONES0.map((n, i) => ({ id: 'z' + i, n, before: null, after: null, mom: null })), firstHidden: false });
 let S = blank();
 try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && typeof s === 'object') S = Object.assign(blank(), s); } catch (e) { /* keep the old text untouched */ }
-// Clean wins: to-dos with small steps. Seeded once with the washer.
-const WASHER = { id: 'washer', n: 'Clean out the washing machine (no more odor)', why: 'The smell lives in the door seal, the detergent drawer and the drum. Clean those three, run one hot empty cycle, then let it dry.',
-  steps: [
-    { t: 'Empty it and sniff', small: 'Door seal, detergent drawer, drum. Where is the smell strongest?', p: 1 },
-    { t: 'Clean the detergent drawer', small: 'Pull it out, soak 10 minutes in hot soapy water, scrub with an old toothbrush. Wipe the slot it sits in.', p: 2 },
-    { t: 'Wipe the door seal or rim', small: 'Front loader: pull back the rubber seal and wipe inside every fold, including the bottom. Top loader: wipe under the lid and around the rim. Dry it.', p: 2 },
-    { t: 'Run one hot empty cycle', small: 'Clean Washer or Tub Clean if you have it, otherwise the hottest, longest cycle. Use the cleaner your manual names. Never mix bleach with vinegar.', p: 2 },
-    { t: 'Wipe the drum and seal dry', small: 'If you used bleach, run a Rinse and Spin so none reaches your next load.', p: 1 },
-    { t: 'Leave the door and drawer open to dry', small: 'Overnight is best. Then rest in that clean feeling.', p: 3, brave: true }],
-  keep: 'To keep it fresh: wipe the seal dry after each load, leave the door open, run the clean cycle once a month.',
-  src: [['Samsung', 'https://www.samsung.com/us/support/troubleshooting/TSG10007246/'], ['Whirlpool', 'https://producthelp.whirlpool.com/Laundry/Washers/Front_Load_Washers/Wash_Performance_or_Clothing_Results/Cleaning_and_Maintenance/Removing_Odors_or_Smells_-_Front_Load_Washer'], ['GE top loaders', 'https://products.geappliances.com/appliance/gea-support-search-content?contentId=16972']] };
-if (!Array.isArray(S.tasks)) S.tasks = [];
-if (!S.tasksSeeded) { S.tasksSeeded = true; S.tasks.unshift({ id: uid(), tpl: 'washer', n: WASHER.n, steps: WASHER.steps.map(() => null), done: null, start: ymd() }); }
-const tplOf = t => t.tpl === 'washer' ? WASHER : null;
 let saveT = 0;
 const save = () => { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Could not save in this browser. Save a backup file from the menu.'); } }, 120); };
 
@@ -141,8 +127,6 @@ function today() {
       h('div', { class: 'rank' }, 'Rank ', h('b', { text: st.rank[1] }), st.next ? ` · ${plural(st.next[0] - st.total, 'more item')} to ${st.next[1]}` : ' · top rank',
         h('div', { class: 'bar' }, h('i', { style: `width:${Math.round(into / span * 100)}%` })))));
 
-  tasksCard(m);
-
   // First run checklist, derived from what has actually happened
   const o = outs();
   const firsts = [
@@ -175,39 +159,6 @@ function today() {
   if (os.length) m.append(h('section', { class: 'card' }, h('h2', { text: 'Sales in progress' }),
     os.map(s => h('div', { class: 'mini' }, h('span', {}, h('b', { text: s.n }), ` · step ${s.steps.filter(Boolean).length} of 6`), h('span', { class: 'left' + (daysLeft(s) <= 0 ? ' late' : ''), text: leftTxt(s) }))),
     h('button', { class: 'btn', type: 'button', style: 'margin-top:8px', text: 'Open the Sell tab', onclick: () => go_('sell') })));
-}
-
-// ---------- Clean wins ----------
-function taskStep(t, i, st) {
-  const on = !!t.steps[i];
-  return chk(on, `${i + 1}. ${st.t}`, st.small, `+${st.p}`, () => {
-    if (on) { const ev = S.ev.filter(e => e.k === 'task' && e.task === t.id && e.i === i).pop(); if (ev) S.ev = S.ev.filter(x => x !== ev); t.steps[i] = null; t.done = null; save(); paintMo(); render(); return; }
-    t.steps[i] = ymd(); const all = t.steps.every(Boolean); if (all) t.done = ymd();
-    addEv({ k: 'task', task: t.id, i, n: `${t.n}: ${st.t.toLowerCase()}`, p: st.p }, all ? `+${st.p} momentum · done. Rest in that clean feeling.` : `+${st.p} momentum`, () => { t.steps[i] = null; t.done = null; });
-  }, st.brave);
-}
-function tasksCard(m) {
-  const open = S.tasks.filter(t => !t.done), recent = S.tasks.filter(t => t.done && daysBetween(t.done, ymd()) < 2);
-  const sec = h('section', { class: 'card' }, h('h2', { text: 'Clean wins' }), h('p', { class: 'hint', text: 'One task at a time. Finish it, then rest in the clean feeling.' }));
-  for (const t of open.concat(recent)) {
-    const T = tplOf(t);
-    if (T) {
-      const n = t.steps.filter(Boolean).length;
-      sec.append(h('div', { class: 'task' }, h('h3', { text: t.n }), h('p', { class: 'hint', text: t.done ? 'Done ' + niceDay(t.done).toLowerCase() + '. ' + T.keep : `${n} of ${T.steps.length} · ${T.why}` }),
-        h('div', { class: 'bar' }, h('i', { style: `width:${Math.round(n / T.steps.length * 100)}%` })),
-        t.done ? null : T.steps.map((st, i) => taskStep(t, i, st)),
-        h('p', { class: 'hint', style: 'margin-top:6px' }, 'Steps from ', T.src.map((x, i) => [i ? ', ' : '', h('a', { href: x[1], target: '_blank', rel: 'noopener', text: x[0] })]), '. Check your manual first.')));
-    } else {
-      sec.append(chk(!!t.done, t.n, t.done ? 'Done ' + niceDay(t.done).toLowerCase() : null, '+1', () => {
-        if (t.done) { const ev = S.ev.filter(e => e.k === 'task' && e.task === t.id).pop(); if (ev) S.ev = S.ev.filter(x => x !== ev); t.done = null; save(); paintMo(); render(); return; }
-        t.done = ymd(); addEv({ k: 'task', task: t.id, n: t.n, p: 1 }, '+1 momentum', () => { t.done = null; });
-      }));
-    }
-  }
-  if (!open.length && !recent.length) sec.append(h('div', { class: 'empty', text: 'All clear. Add the next one.' }));
-  const ni = h('input', { class: 'inp', type: 'text', placeholder: 'Add a to-do, e.g. Wipe the bathroom mirror', 'aria-label': 'New to-do', maxlength: '80' });
-  sec.append(h('div', { class: 'qrow', style: 'margin-top:10px' }, ni, h('button', { class: 'btn', type: 'button', text: 'Add', onclick: () => { const n = ni.value.trim(); if (!n) return; S.tasks.push({ id: uid(), n, done: null, start: ymd() }); save(); render(); } })));
-  m.append(sec);
 }
 
 // ---------- Sell ----------
@@ -326,10 +277,174 @@ function history() {
     m.append(h('div', { class: 'day' }, h('h3', {}, niceDay(d), h('span', { text: n ? plural(n, 'item') + ' out' : '' })),
       h('div', { class: 'list' }, list.slice().reverse().map(e => h('div', { class: 'ent' },
         h('div', { class: 'what' }, e.k === 'out' ? `${e.n}` : e.n, e.k === 'out' ? h('span', { class: 'tag ' + (e.route === 'sell' ? 't' : 'n'), text: ROUTES[e.route] }) : null,
-          h('small', { text: e.k === 'out' ? `${plural(e.c, 'item')}${e.g ? ' · $' + e.g : ''}` : e.k === 'step' ? 'Sell step' : e.k === 'start' ? 'Sale started' : e.k === 'task' ? 'Clean win' : 'Zone proof' })),
+          h('small', { text: e.k === 'out' ? `${plural(e.c, 'item')}${e.g ? ' · $' + e.g : ''}` : ({ step: 'Sell step', start: 'Sale started', zone: 'Zone proof', mind: 'Mind', in: 'Came in' })[e.k] || '' })),
         h('span', { class: 'pts', text: e.p ? '+' + e.p : '' }),
         e.k === 'out' && !e.sale ? h('button', { class: 'x', type: 'button', 'aria-label': 'Remove ' + e.n, text: '×', onclick: () => { S.ev = S.ev.filter(x => x !== e); save(); paintMo(); render(); toast('Removed', () => { S.ev.push(e); S.ev.sort((a, c) => a.t - c.t); save(); paintMo(); render(); }); } }) : null)))));
   }
+}
+
+// ---------- Mind: short exercises for the part of clutter that lives in your head ----------
+const blankMind = () => ({ circle: [], worries: [], ready: {}, talks: {}, pace: 5, seen: [] });
+S.mind = Object.assign(blankMind(), S.mind || {});
+const READY = ['Water: 1 gallon per person per day, for several days', 'Several days of non-perishable food', 'Manual can opener', 'Flashlight', 'Extra batteries', 'Battery or hand-crank radio', 'First aid kit', 'Prescription medicines', 'Phone charger and backup battery', 'Whistle', 'Dust masks', 'Wipes, garbage bags and ties', 'Wrench or pliers for utilities', 'Local maps', 'Some cash', 'Copies of important papers in a waterproof bag'];
+const TALKS = ['Which three things in the house matter most to you?', 'Is there anything you would like a particular person to have someday?', 'What would you be glad to see go now?', 'Which room or spot bugs you the most?', 'Where are the important papers kept?', 'Would you like help with one closet this month?'];
+const mindDone = (m, n) => addEv({ k: 'mind', m, n, p: 1 }, `+1 momentum · ${n}`);
+function openSheet(title, ...kids) {
+  closeSheet();
+  const box = h('div', { role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
+    h('div', { class: 'sh-h' }, h('h2', { text: title }), h('button', { class: 'close', type: 'button', 'aria-label': 'Close', text: '×', onclick: closeSheet })), ...kids);
+  const wrap = h('div', { class: 'modal', onclick: e => { if (e.target === wrap) closeSheet(); } }, box);
+  document.body.append(wrap); return box;
+}
+const lab = t => h('div', { class: 'lab', text: t });
+const field = (label, ph, rows) => { const el = rows ? h('textarea', { class: 'inp', rows: String(rows), placeholder: ph, 'aria-label': label }) : h('input', { class: 'inp', type: 'text', placeholder: ph, 'aria-label': label }); return [lab(label), el]; };
+
+function seeSheet() {
+  let left = 60, iv = 0;
+  const clock = h('b', { text: '1:00' });
+  const startB = h('button', { class: 'btn go', type: 'button', text: 'Start 60 seconds', onclick: () => {
+    clearInterval(iv); left = 60; startB.disabled = true;
+    iv = setInterval(() => { left--; clock.textContent = `0:${String(Math.max(0, left)).padStart(2, '0')}`; if (left <= 0) { clearInterval(iv); beep(); startB.disabled = false; startB.textContent = 'Again'; clock.textContent = 'Done'; } }, 1000);
+  } });
+  const [l1, surf] = field('Which surface?', 'e.g. nightstand');
+  openSheet('See one small change',
+    h('p', { class: 'sh-cue', text: "The whole house is too big to picture. One surface isn't." }),
+    h('ol', { class: 'steps-l' },
+      h('li', { text: 'Soften your gaze or close your eyes.' }),
+      h('li', { text: 'Pick one small surface you can see from here: a nightstand, one shelf, a chair.' }),
+      h('li', { text: 'Picture it clear. What goes back where it lives? What leaves the room?' }),
+      h('li', { text: 'Picture using it: setting down a glass of water, a book, your phone.' }),
+      h('li', { text: 'Open your eyes. That one surface is the whole job for today.' })),
+    h('div', { class: 'timer-b' }, clock, startB), l1, surf,
+    h('div', { style: 'margin-top:14px' }, h('button', { class: 'btn green wide', type: 'button', text: "I'll clear this one now", onclick: () => {
+      clearInterval(iv); const n = surf.value.trim() || 'one surface';
+      S.mind.seen.push({ id: uid(), d: ymd(), n }); closeSheet(); go_('today'); mindDone('see', `Pictured ${n}`);
+    } })));
+}
+
+const RINGS = { mine: ['Mine to decide', 'Yours to decide. Pick the smallest next step and do it on Today or Sell.'], ours: ['Ours to talk about', 'Worth one calm talk. Frame it around what makes life easier now, not later.'], not: ['Not mine to carry', 'Not yours to fix. You can care about it without carrying it. Let it stay with its owner.'] };
+function circleSheet() {
+  const [l1, w] = field("What's on your mind?", "e.g. Dad's boxes in the hallway");
+  const out = h('div');
+  const list = h('div');
+  const paintList = () => {
+    list.replaceChildren();
+    for (const k of Object.keys(RINGS)) {
+      const items = S.mind.circle.filter(c => c.r === k).slice(-6).reverse(); if (!items.length) continue;
+      list.append(lab(RINGS[k][0]), h('div', { class: 'list' }, items.map(c => h('div', { class: 'ent' }, h('div', { class: 'what' }, c.t, c.say ? h('small', { text: 'Say: ' + c.say }) : null),
+        h('button', { class: 'x', type: 'button', 'aria-label': 'Remove ' + c.t, text: '×', onclick: () => { S.mind.circle = S.mind.circle.filter(x => x !== c); save(); paintList(); } })))));
+    }
+  };
+  const pick = r => {
+    const t = w.value.trim(); if (!t) { out.replaceChildren(h('p', { class: 'hint', style: 'color:var(--red)', text: 'Type the worry first.' })); return; }
+    const c = { id: uid(), d: ymd(), t, r }; S.mind.circle.push(c); w.value = '';
+    const kids = [h('p', { class: 'sh-cue', style: 'margin:12px 0 6px;color:var(--ink)', text: RINGS[r][1] })];
+    if (r === 'ours') { const [l2, say] = field('One sentence you could say', 'e.g. Could we clear the hallway together on Saturday? It would be easier to get through.', 2); say.oninput = () => { c.say = say.value.trim(); save(); }; kids.push(l2, say); }
+    out.replaceChildren(...kids); mindDone('circle', `Sorted: ${RINGS[r][0].toLowerCase()}`); paintList();
+  };
+  openSheet('Circle of control',
+    h('p', { class: 'sh-cue', text: "It's your parents' house. Some of the clutter is yours to decide, some is worth a talk, and some isn't yours to carry." }),
+    l1, w, h('div', { class: 'chips', style: 'margin-top:10px' }, Object.keys(RINGS).map(k => h('button', { class: 'chip', type: 'button', 'data-ring': k, text: RINGS[k][0], onclick: () => pick(k) }))),
+    out, list);
+  paintList();
+}
+
+function worrySheet() {
+  const f = [['The worry in one sentence', 'e.g. Hard times will come and we will need everything we kept.', 2], ['Worst realistic case', 'Not the movie version. The bad-but-real one.', 2], ['Best case', 'Let it be a little silly.', 2], ['Most likely', 'What would you tell a friend? What happened last time?', 2], ['If the worst happened, what would I do first?', 'Who could help? What have I handled before?', 2], ['One small step now', 'e.g. Check the Ready shelf. Donate one bag.', 1]].map(x => field(...x));
+  const err = h('p', { class: 'hint', style: 'color:var(--red);margin:6px 0 0' });
+  const past = S.mind.worries.slice(-5).reverse();
+  openSheet('Worry check',
+    h('p', { class: 'sh-cue', text: 'Worry tends to show only the worst case. Write all three, then plan for the most likely one.' }),
+    f.flat(), err,
+    h('div', { style: 'margin-top:14px' }, h('button', { class: 'btn go wide', type: 'button', text: 'Save this check', onclick: () => {
+      const v = f.map(x => x[1].value.trim()); if (!v[0] || !v[3]) { err.textContent = 'Write the worry and the most likely case at least.'; return; }
+      S.mind.worries.push({ id: uid(), d: ymd(), w: v[0], worst: v[1], best: v[2], likely: v[3], cope: v[4], step: v[5] }); closeSheet(); mindDone('worry', 'Worry check');
+    } })),
+    past.length ? h('details', { class: 'more' }, h('summary', { text: `Past checks (${S.mind.worries.length})` }),
+      h('div', { class: 'list', style: 'margin-top:8px' }, past.map(x => h('div', { class: 'ent' }, h('div', { class: 'what' }, x.w, h('small', { text: `Most likely: ${x.likely}${x.step ? ' · Step: ' + x.step : ''}` })))))) : null,
+    h('p', { class: 'hint', style: 'margin-top:14px', text: 'If a hard time is truly coming, plan for it. This check is for worries that run ahead of the facts.' }));
+}
+
+function readySheet() {
+  const box = h('div');
+  const paint = () => {
+    const have = READY.filter((_, i) => S.mind.ready[i]).length;
+    box.replaceChildren(h('p', { class: 'hint', text: `${have} of ${READY.length} on the shelf` }), h('div', { class: 'bar' }, h('i', { style: `width:${Math.round(have / READY.length * 100)}%` })),
+      ...READY.map((t, i) => chk(!!S.mind.ready[i], t, null, null, () => { if (S.mind.ready[i]) delete S.mind.ready[i]; else S.mind.ready[i] = ymd(); save(); paint(); })));
+  };
+  const flow = h('div', { class: 'card', style: 'margin-top:14px' });
+  const [l1, item] = field('Holding something "just in case"?', 'e.g. a box of old cables');
+  const ask = (q, yes, no) => { flow.replaceChildren(h('p', { style: 'margin:0 0 10px;font-weight:600', text: q }), h('div', { class: 'row' }, h('button', { class: 'btn', type: 'button', text: 'Yes', onclick: yes }), h('button', { class: 'btn', type: 'button', text: 'No', onclick: no }))); };
+  const verdict = t => { flow.replaceChildren(h('p', { style: 'margin:0 0 10px', text: t }), h('button', { class: 'btn go', type: 'button', text: 'Done', onclick: () => { mindDone('ready', `Just in case: ${item.value.trim() || 'one item'}`); start(); } })); };
+  const start = () => { flow.replaceChildren(l1, item, h('button', { class: 'btn go', type: 'button', style: 'margin-top:10px', text: 'Ask the questions', onclick: () => ask('Is it on the Ready list above?',
+    () => verdict('Put it on the Ready shelf. That is what the shelf is for.'),
+    () => ask('Did you use it in the last year?',
+      () => verdict('Keep it, and give it a home where you can find it.'),
+      () => ask('If you needed it, could you get one again (borrow, buy, ask a neighbor)?',
+        () => verdict('Let it go. Log it on Today, or start a sale if it is worth selling.'),
+        () => verdict('Put it in a Maybe box with today\'s date. In 14 days, decide again.')))) })); };
+  start();
+  openSheet('Ready shelf',
+    h('p', { class: 'sh-cue', text: 'Being ready for hard days is real. It fits in one or two bins, not the whole house. This is the basic kit Ready.gov recommends.' }),
+    box, flow,
+    h('p', { class: 'src', style: 'margin-top:12px' }, 'List from ', h('a', { href: 'https://www.ready.gov/kit', target: '_blank', rel: 'noopener', text: 'Ready.gov Build a Kit' }), '. Check it every six months.'));
+  paint();
+}
+
+function longSheet() {
+  const o = outs(), t = ymd(); const last28 = o.filter(e => daysBetween(e.d, t) < 28).reduce((s, e) => s + e.c, 0); const actual = Math.round(last28 / 4 * 10) / 10;
+  const pace = counter(S.mind.pace, 'Things out per week'); const res = h('p', { style: 'margin:8px 0 0' });
+  const paintPace = () => { const n = pace.get(); S.mind.pace = n; save(); res.replaceChildren('That is ', h('b', { text: (n * 52).toLocaleString() }), ' a year and ', h('b', { text: (n * 260).toLocaleString() }), ' in five years. Your last four weeks: ', h('b', { text: actual }), ' a week.'); };
+  pace.addEventListener('click', paintPace); pace.querySelector('input').addEventListener('input', paintPace);
+  const talks = TALKS.map((q, i) => { const ta = h('textarea', { class: 'inp', rows: '2', 'aria-label': q, placeholder: 'Their words, in short' }); ta.value = S.mind.talks[i] || ''; ta.oninput = () => { S.mind.talks[i] = ta.value; save(); }; return [lab(q), ta]; });
+  openSheet('The long game',
+    h('p', { class: 'sh-cue', text: "The house runs on your parents' choices. Your part is the slow, steady version, so nobody has to face it all at once later. The Swedes call this döstädning: clearing a little at a time, over years." }),
+    lab('A pace you could keep'), h('div', { style: 'max-width:160px' }, pace), res,
+    lab('Talks while everyone is here and well'),
+    h('p', { class: 'hint', style: 'margin:0 0 4px', text: 'One question per talk is plenty. Frame it around what makes life easier now. Start with easy things like clothes, not photos.' }),
+    talks.flat(),
+    h('div', { style: 'margin-top:14px' }, h('button', { class: 'btn go wide', type: 'button', text: 'I had one of these talks', onclick: () => { closeSheet(); mindDone('long', 'Talked with Mom or Dad'); } })),
+    h('p', { class: 'src', style: 'margin-top:12px' }, 'Idea from Margareta Magnusson, ', h('a', { href: 'https://parents.simonandschuster.com/9781501173240', target: '_blank', rel: 'noopener', text: 'The Gentle Art of Swedish Death Cleaning' }), '.'));
+  paintPace();
+}
+
+function flowSheet() {
+  const box = h('div');
+  const paint = () => {
+    const m = ymd().slice(0, 7);
+    const inN = S.ev.filter(e => e.k === 'in' && e.d.startsWith(m)).reduce((s, e) => s + e.c, 0), outN = outs().filter(e => e.d.startsWith(m)).reduce((s, e) => s + e.c, 0);
+    box.replaceChildren(h('div', { class: 'score', style: 'grid-template-columns:repeat(3,1fr)' },
+      h('div', {}, h('b', { text: inN }), h('span', { text: 'came in' })), h('div', {}, h('b', { text: outN }), h('span', { text: 'went out' })),
+      h('div', {}, h('b', { text: (outN - inN > 0 ? '+' : '') + (outN - inN) }), h('span', { text: 'net clearer' }))),
+      h('p', { class: 'hint', style: 'margin:6px 0 0', text: 'This month, your own things only.' }));
+  };
+  const [l1, n] = field('Something of mine came in', 'e.g. new cable, a free shirt');
+  openSheet('In and out',
+    h('p', { class: 'sh-cue', text: 'Clearing only feels like progress if less comes in than goes out. Before something comes in, ask: where will it live, and what leaves to make room?' }),
+    box, l1, n,
+    h('div', { style: 'margin-top:10px' }, h('button', { class: 'btn wide', type: 'button', text: 'Count it', onclick: () => { addEv({ k: 'in', n: n.value.trim() || 'Something came in', c: 1, p: 0 }, 'Counted. Noticing is the skill.'); n.value = ''; paint(); } })),
+    h('p', { class: 'hint', style: 'margin-top:12px', text: "Things other people bring in aren't yours to count. Put them in Circle of control as not mine to carry." }));
+  paint();
+}
+
+const MOVES = [
+  { id: 'see', t: 'See one small change', d: 'One minute picturing one clear surface, then do just that.', run: seeSheet },
+  { id: 'circle', t: 'Circle of control', d: 'Mine to decide, ours to talk about, or not mine to carry.', run: circleSheet },
+  { id: 'worry', t: 'Worry check', d: 'Worst, best and most likely. Then one small step.', run: worrySheet },
+  { id: 'ready', t: 'Ready shelf', d: 'Prepared for hard days in one or two bins, not the whole house.', run: readySheet },
+  { id: 'long', t: 'The long game', d: 'A slow pace you can keep, and talks while everyone is well.', run: longSheet },
+  { id: 'flow', t: 'In and out', d: 'Notice what comes in, not just what leaves.', run: flowSheet }
+];
+function mind() {
+  const m = $('#main'); m.replaceChildren();
+  const dayN = Math.floor(new Date(ymd() + 'T12:00') / 864e5), pick = MOVES[dayN % MOVES.length];
+  const doneToday = new Set(S.ev.filter(e => e.k === 'mind' && e.d === ymd()).map(e => e.m));
+  m.append(h('h1', { text: 'Mind' }), h('p', { class: 'sub', text: 'Short exercises for the part of clutter that lives in your head. Each one is +1 momentum.' }),
+    h('section', { class: 'new' }, h('p', { class: 'k', text: "Today's move" }), h('h3', { text: pick.t }), h('p', { class: 'cue', text: pick.d }),
+      h('button', { class: 'btn green', type: 'button', text: doneToday.has(pick.id) ? 'Do it again' : 'Start', onclick: pick.run })),
+    h('h2', { text: 'All moves' }),
+    h('div', { class: 'list mv' }, MOVES.map(x => h('div', { class: 'ex' }, h('button', { class: 'name', type: 'button', 'data-move': x.id, onclick: x.run }, h('b', {}, x.t, doneToday.has(x.id) ? h('span', { class: 'tag n', text: 'Done today' }) : null), h('span', { text: x.d }))))),
+    h('p', { class: 'foot' }, 'If worry about the future or the house takes up a lot of your day, a therapist trained in CBT can help. The ', h('a', { href: 'https://hoarding.iocdf.org/about-hoarding/how-is-hoarding-disorder-treated/', target: '_blank', rel: 'noopener', text: 'IOCDF' }), ' explains how that works.'));
 }
 
 // ---------- Backup, restore, about ----------
@@ -343,9 +458,10 @@ function restore(file) {
     if (!b || !Array.isArray(b.ev)) throw 0;
     const ids = new Set(S.ev.map(e => e.id)); for (const e of b.ev) if (e && e.id && !ids.has(e.id)) S.ev.push(e);
     S.ev.sort((a, c) => a.t - c.t);
-    const tids = new Set(S.tasks.map(x => x.id)); for (const x of b.tasks || []) if (!tids.has(x.id)) S.tasks.push(x);
     const sids = new Set(S.sales.map(s => s.id)); for (const s of b.sales || []) if (!sids.has(s.id)) S.sales.push(s);
     for (const z of b.zones || []) { const mine = S.zones.find(x => x.id === z.id); if (!mine) S.zones.push(z); else for (const k of ['before', 'after', 'mom']) if (!mine[k] && z[k]) mine[k] = z[k]; }
+    if (b.mind) { for (const k of ['circle', 'worries', 'seen']) { const ids = new Set(S.mind[k].map(x => x.id)); for (const x of b.mind[k] || []) if (!ids.has(x.id)) S.mind[k].push(x); }
+      Object.assign(S.mind.ready, b.mind.ready || {}); for (const [i, v] of Object.entries(b.mind.talks || {})) if (!S.mind.talks[i]) S.mind.talks[i] = v; }
     save(); paintMo(); render(); toast('Backup added. Nothing was erased.');
   }).catch(() => toast('That file is not a Clear Quest backup.'));
 }
@@ -357,6 +473,7 @@ function about() {
     h('p', { text: 'The main number is items out the door this week. Something counts only once it has left: returned to its owner, donated, sold or thrown out.' }),
     h('p', { text: 'Each item out is +2 momentum (up to +10 for a bundle), and a sale adds +3. Sell steps earn +1 to +5, and the scary ones (posting, answering buyers) pay the most. Photos and Mom checks on the Zones tab earn more.' }),
     h('p', { text: 'Every sale has a 14-day timer. When it runs out, tap Donate instead. It still counts, so selling never keeps stuff in your room.' }),
+    h('p', { text: 'The Mind tab has short exercises for worry, the long game with your parents and what comes in. Each is +1, so stuff leaving still counts most.' }),
     h('p', { text: 'Momentum fades by a seventh each day. It never goes negative, and one bag out the door brings it back.' }),
     h('p', { class: 'hint', text: 'Everything is saved in this browser only. Use Save a backup file in the menu now and then, especially before switching phones.' }),
     h('div', { style: 'margin-top:14px' }, h('button', { class: 'btn go wide', type: 'button', text: 'Got it', onclick: closeSheet })));
@@ -366,7 +483,7 @@ function about() {
 
 // ---------- Tabs ----------
 let tab = 'today';
-const VIEWS = { today, sell, zones, history };
+const VIEWS = { today, sell, zones, mind, history };
 const render = () => VIEWS[tab]();
 function go_(t) { tab = t; document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t)); render(); scrollTo(0, 0); }
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => go_(b.dataset.tab));
