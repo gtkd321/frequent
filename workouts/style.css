@@ -170,3 +170,7 @@ details.more summary { cursor: pointer; color: var(--muted); font-size: 14px; }
 .steps-list { padding-left: 20px; margin: 4px 0 14px; } .steps-list li { margin: 6px 0; }
 .code { font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace; background: var(--soft); border-radius: 8px; padding: 8px 10px; word-break: break-all; user-select: all; }
 .imp p { margin: 4px 0; }
+
+.warm { margin: 0 0 12px; }
+.warm .lab { margin-top: 0; }
+.btn.skip { margin-top: 8px; background: none; border: 0; color: var(--muted); font-size: 14px; }

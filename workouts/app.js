@@ -142,7 +142,43 @@ function addLog(ex, vals, twist, feel, note) {
 function quickLog(ex) {
   const last = lastOf(ex.id);
   const vals = last ? (ex.k === 'time' ? { m: last.m } : { w: last.w, r: last.r, s: last.s }) : startOf(ex);
-  addLog(ex, vals, last ? last.tw || 'Standard' : 'Standard', '', '');
+  const go = () => addLog(ex, vals, last ? last.tw || 'Standard' : 'Standard', '', '');
+  // The first weighted log of the day asks for the two warm-up sets first.
+  if (ex.k === 'load' && vals.w > 0 && !S.log.some(e => e.ex === ex.id && e.d === ymd())) warmPrompt(ex, vals, go); else go();
+}
+
+// ---------- Warm-up: one set at 50% and one at 70% of your max ----------
+// Max = the heaviest weight you have logged for this exercise (or today's weight, if heavier).
+const WARM = [[0.5, 10], [0.7, 5]];
+const bestOf = id => entriesFor(id).reduce((m, e) => Math.max(m, e.w || 0), 0);
+const roundW = w => { const st = w < 40 ? 2.5 : 5; return Math.max(st, Math.round(w / st) * st); };
+const warmSets = max => WARM.map(([f, r]) => ({ pct: Math.round(f * 100), w: roundW(max * f), r }));
+function warmBox(ex, getW) {
+  const box = h('div', { class: 'warm' });
+  const ticked = new Set();
+  const paint = () => {
+    const max = Math.max(bestOf(ex.id), getW());
+    if (!(max > 0)) { box.hidden = true; return; } box.hidden = false;
+    box.replaceChildren(
+      h('p', { class: 'lab', text: `Warm up first · of your ${fmtNum(max)} lb max` }),
+      h('div', { class: 'chips' }, warmSets(max).map((x, i) => h('button', {
+        class: 'chip' + (ticked.has(i) ? ' on' : ''), type: 'button', 'aria-pressed': String(ticked.has(i)),
+        text: `${ticked.has(i) ? '✓ ' : ''}${x.pct}% · ${fmtNum(x.w)} lb × ${x.r}`,
+        onclick: () => { ticked.has(i) ? ticked.delete(i) : ticked.add(i); paint(); } }))));
+  };
+  paint(); box.repaint = paint; return box;
+}
+function warmPrompt(ex, vals, go) {
+  closeSheet(); $('#toast').classList.remove('on');
+  const box = h('div', { role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Warm up for ' + ex.n },
+    h('div', { class: 'sh-h' }, h('h2', { text: ex.n }), h('button', { class: 'close', type: 'button', 'aria-label': 'Close', text: '×', onclick: closeSheet })),
+    warmBox(ex, () => vals.w),
+    h('p', { class: 'hint', text: 'Tap each warm-up set as you finish it. Warm-ups are not logged.' }),
+    h('div', { style: 'margin-top:16px' }, h('button', { class: 'btn go wide', type: 'button', text: `Warmed up · log ${fmtSet(ex, vals)}`, onclick: () => { closeSheet(); go(); } })),
+    h('button', { class: 'btn wide skip', type: 'button', text: 'Skip warm-up and log', onclick: () => { closeSheet(); go(); } }));
+  const wrap = h('div', { class: 'modal', onclick: e => { if (e.target === wrap) closeSheet(); } }, box);
+  document.body.append(wrap);
+  setTimeout(() => box.querySelector('.btn.go').focus({ preventScroll: true }), 30);
 }
 
 let toastT = 0;
@@ -341,19 +377,21 @@ function sheet(ex, presetTwist) {
   custom.addEventListener('change', () => { const x = custom.value.trim(); if (x) { twist = x; done.add(x); custom.value = ''; paintTwists(); paintPrev(); } });
 
   const reps = ex.u === 'sec' ? 'Seconds' : ex.u === 'lengths' ? 'Lengths' : 'Reps';
+  let warm = null;
   const steps = ex.k === 'time'
     ? h('div', { class: 'steps' }, stepper('Minutes', v.m, 1, 1, x => v.m = x))
     : h('div', { class: 'steps' },
-      ex.k === 'load' ? stepper('Pounds', v.w, 5, 0, x => v.w = x) : null,
+      ex.k === 'load' ? stepper('Pounds', v.w, 5, 0, x => { v.w = x; if (warm) warm.repaint(); }) : null,
       stepper(reps, v.r, ex.u === 'sec' ? 5 : 1, 1, x => v.r = x),
       stepper('Sets', v.s, 1, 1, x => v.s = x));
 
+  if (ex.k === 'load') warm = warmBox(ex, () => v.w);
   paintTwists(); paintFeel(); paintPrev();
   const box = h('div', { role: 'dialog', 'aria-modal': 'true', 'aria-label': ex.n },
     h('div', { class: 'sh-h' }, h('h2', { text: ex.n }), h('button', { class: 'close', type: 'button', 'aria-label': 'Close', text: '×', onclick: closeSheet })),
     h('p', { class: 'sh-cue', text: ex.cue || REGIONS[ex.g] }),
     last ? h('p', { class: 'sh-last', text: `Last time (${niceDay(last.d).toLowerCase()}): ${fmtSet(ex, last)}${last.tw && last.tw !== 'Standard' ? ' · ' + last.tw : ''}. Logged on ${daysOf(ex.id)} day${daysOf(ex.id) === 1 ? '' : 's'}.` }) : null,
-    steps,
+    warm, steps,
     h('p', { class: 'lab', text: 'Twist' }), twistBox,
     h('details', { class: 'more' }, h('summary', { text: 'How it felt, notes, your own twist' }),
       h('p', { class: 'lab', text: 'How it felt' }), feelBox,
