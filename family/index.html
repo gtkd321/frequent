@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Family Tree</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#f5f1e8">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top" id="bar" hidden>
+  <button class="icon" id="homeBtn" type="button" aria-label="Home"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button>
+  <span class="brand" id="title">Family Tree</span>
+  <div class="search">
+    <input id="q" type="search" autocomplete="off" placeholder="Search for a name">
+    <div id="results" class="results" hidden></div>
+  </div>
+  <button class="icon txt" id="langBtn" type="button">ΕΛ</button>
+  <button class="icon" id="menuBtn" type="button" aria-label="Menu"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+</header>
+<main id="main" class="wrap"></main>
+<dialog id="sheet"></dialog>
+<div id="toast" class="toast" role="status" hidden></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
