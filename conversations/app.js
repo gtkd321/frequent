@@ -122,6 +122,14 @@ function renderPractice(sc, isToday) {
     convo.append(bubble('them', r.then, 'Then they say'));
     convo.append(bubble('you land', r.close, 'You land it'));
 
+    if (sc.loop) {
+      const L = sc.loop;
+      convo.append(h('div', { class: 'loop' },
+        h('p', { class: 'loop-h' }, 'Open a curiosity loop ', expertTag('loewenstein')),
+        bubble('you', L.plant, 'Before you go'),
+        bubble('them', L.react, 'They say'),
+        h('p', { class: 'loop-c' }, h('b', {}, 'Close it: '), L.close)));
+    }
     S.reps[sc.id] = (S.reps[sc.id] || 0) + 1; S.total++; S.last[sc.id] = Date.now();
     if (m.r === 'best') { S.best[sc.id] = (S.best[sc.id] || 0) + 1; S.bestTotal++; }
     save(); updatePill(); const f = $('.foot', main); if (f) f.textContent = footText(); $('#rep').classList.remove('bump'); void $('#rep').offsetWidth; $('#rep').classList.add('bump');
@@ -170,11 +178,11 @@ function renderExperts() {
   main.append(h('p', { class: 'sub' }, 'Every move is graded by one of these ideas. Tap a name anywhere to see it.'));
   const list = h('div', { class: 'experts' });
   for (const [id, e] of Object.entries(EXPERTS)) {
-    const uses = SCRIPTS.reduce((n, s) => n + s.replies.reduce((m, r) => m + r.moves.filter(x => x.by === id).length, 0), 0);
+    const uses = SCRIPTS.reduce((n, s) => n + s.replies.reduce((m, r) => m + r.moves.filter(x => x.by === id).length, 0), 0) + (id === 'loewenstein' ? SCRIPTS.filter(s => s.loop).length : 0);
     list.append(h('article', { class: 'ex-card' },
       h('h2', {}, e.name), h('p', { class: 'role' }, e.role), h('p', {}, e.idea),
       h('p', { class: 'links' }, ...e.links.map(([t, u]) => h('a', { href: u, target: '_blank', rel: 'noopener' }, t))),
-      h('p', { class: 'hint' }, `Grades ${uses} moves`)));
+      h('p', { class: 'hint' }, id === 'loewenstein' ? `Shapes ${uses} curiosity loops` : `Grades ${uses} moves`)));
   }
   main.append(list);
   main.append(h('p', { class: 'foot' }, 'Reply odds are estimates written from these ideas, not measured rates. Log your real tries and each script switches to your own numbers after five.'));

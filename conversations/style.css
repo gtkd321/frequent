@@ -91,6 +91,10 @@ h1 { font-size: 23px; line-height: 1.2; margin: 0 0 4px; font-weight: 600; }
 .replay { margin: 4px 0 0; text-align: center; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 10px; }
 .replay::before, .replay::after { content: ''; flex: 1; border-top: 1px solid var(--line); }
 
+.loop { margin-top: 8px; padding: 14px; border-radius: 12px; border: 1px dashed color-mix(in srgb, var(--tc) 55%, var(--line)); display: grid; gap: 10px; background: color-mix(in srgb, var(--tc) 4%, var(--paper)); }
+.loop-h { margin: 0; font-weight: 600; color: var(--tc); }
+.loop-c { margin: 0; font-size: 14.5px; }
+
 /* Script list */
 .list { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
 .row-b { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border: 0; border-top: 1px solid var(--line); background: none; text-align: left; }

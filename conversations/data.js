@@ -473,3 +473,29 @@ const SCRIPTS = [
         then: 'The front shelf is full. Maybe the counter by the register?',
         close: 'The counter works. Three bottles and a tasting card. Shall we try that?' } ] },
 ];
+
+// ---------- Curiosity loops ----------
+// Open a small gap now and close it later. Keep the gap small, keep it true, and always close it.
+EXPERTS.loewenstein = { name: 'George Loewenstein', role: 'Carnegie Mellon, the information-gap theory of curiosity',
+  idea: 'Curiosity is the itch of a known gap: you know enough to see what\u2019s missing. A small, specific gap pulls hardest; a vague mystery doesn\u2019t. (The popular claim that unfinished things are better remembered, the Zeigarnik effect, is weaker than it sounds. The stronger finding is that people want to resume what was interrupted.)',
+  links: [['The Psychology of Curiosity (1994)', 'https://www.cmu.edu/dietrich/sds/docs/loewenstein/PsychofCuriosity.pdf'], ['On the Zeigarnik evidence', 'https://executive-authority.com/insights/zeigarnik-effect-executive-communication/']] };
+
+const LOOPS = {
+  cafe:      { plant: 'Ask me next time why I almost didn\u2019t come over.', react: 'Wait, why?', close: 'Smile and say \u201cnext time.\u201d Close it on the coffee date with the true, short answer.' },
+  app1:      { plant: 'I have a theory about people who post goat photos. You get it in person.', react: 'Okay, now I need to know.', close: 'Tell it on the date. Keep it kind and funny.' },
+  party:     { plant: 'Remind me to tell you how I met Maria. It\u2019s a better story than it should be.', react: 'You can\u2019t just say that.', close: 'Tell it before you leave, or save it for your first text. Only use a story that\u2019s true.' },
+  number:    { plant: 'I\u2019ll tell you the real reason I asked when I text you.', react: 'Ha. Okay, now I\u2019m curious.', close: 'First text: \u201cReal reason: you were the only one who laughed at the dip joke.\u201d' },
+  textdate:  { plant: 'Also, I\u2019m ordering you the best thing on their menu. You won\u2019t guess it.', react: 'Is it the scones? Tell me.', close: 'Order it for them at the date. The answer is the moment.' },
+  firstdate: { plant: 'I\u2019ll tell you my highlight at the end of the night.', react: 'Hm. Bold.', close: 'At the goodbye: \u201cMy highlight was this.\u201d Mean it.' },
+  deeper:    { plant: 'I\u2019ll tell you mine, but only after dessert.', react: 'Now I have to get dessert.', close: 'After dessert, give your own honest answer. Fair trade.' },
+  again:     { plant: 'One part of Thursday is a surprise. Wear shoes you can walk in.', react: 'What kind of surprise?', close: 'Make it small and good: the walk to the best ice cream in town after trivia.' },
+  shop:      { plant: 'There\u2019s one thing my aunt does with this oil that no one else does. I\u2019ll show you when I bring the bottles.', react: 'Okay, what is it?', close: 'Bring it with the delivery: the harvest date, a photo of the grove, her name on the label.' },
+  cold:      { plant: 'I noticed one thing in your last video most people miss. It\u2019s in the sample.', react: 'What did you notice?', close: 'Name it in one line at the top of the sample email.' },
+  looking:   { plant: 'Save this one for last. It\u2019s the one people come back for.', react: 'Why that one?', close: 'Pour it last and let them tell you why.' },
+  discovery: { plant: 'There\u2019s one Greek phrase grandmothers melt for. Your kids learn it in the first class.', react: 'What is it?', close: 'Teach it in class one and have them say it on the phone that night.' },
+  price:     { plant: 'There\u2019s a reason it costs more. You\u2019ll taste it in the first two seconds.', react: 'Okay, show me.', close: 'Pour it. The pepper at the back of the throat is the answer.' },
+  followup:  { plant: 'I\u2019ll bring something your staff hasn\u2019t tasted before.', react: 'Like what?', close: 'Bring it to the tasting. Don\u2019t tell them early.' },
+  network:   { plant: 'I have a supplier idea for you, but I want to check one thing first. Can I email you Monday?', react: 'Sure. What\u2019s the idea?', close: '\u201cMonday.\u201d Then send it Monday morning. An interrupted thing is one people want to pick back up.' },
+  close:     { plant: 'At the two-week check-in I\u2019ll show you who bought it. There\u2019s usually a surprise.', react: 'What kind of surprise?', close: 'Bring the real numbers to the check-in, surprise or not.' },
+};
+for (const s of SCRIPTS) s.loop = LOOPS[s.id];
