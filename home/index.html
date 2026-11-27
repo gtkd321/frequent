@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Frequent Home</title>
+<meta name="description" content="From your parents' house to your own trailer, then a house. Log a day in one tap and keep a pace you can hold.">
+<meta name="copyright" content="© 2026 Daniel Houlis. All rights reserved. Frequent is a trademark of Daniel Houlis.">
+<meta name="theme-color" content="#f5f1e8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Home">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="icon.svg" alt="" width="26" height="26"><span>Frequent <b>Home</b></span></div>
+  <button class="menu-b" id="menuB" aria-label="Menu">⋯</button>
+</header>
+<div class="menu" id="menu" hidden>
+  <button data-act="targets">Change targets</button>
+  <button data-act="backup">Save a backup file</button>
+  <label class="file-b">Restore from a backup<input type="file" id="restore" accept=".json,application/json"></label>
+  <button data-act="reset">Start over</button>
+</div>
+<main id="main"></main>
+<dialog id="dlg"><form method="dialog" id="dlgF"></form></dialog>
+<script src="app.js?v=1"></script>
+</body>
+</html>

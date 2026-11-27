@@ -1,0 +1,72 @@
+:root {
+  --bg: #f5f1e8; --paper: #fffdf7; --ink: #1f1d1a; --muted: #6b655b; --line: #e2dccd; --soft: #f0ece2;
+  --blue: #2c5a8c; --blue-ink: #fff; --red: #c0392b; --yellow: #a87a05; --green: #2e7d4f;
+  --r: 14px; --pad: clamp(14px, 4vw, 22px);
+  --font: 'General Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #15171c; --paper: #1d2027; --ink: #ece8de; --muted: #a39d90; --line: #2f333c; --soft: #242830; --blue: #6c9bd2; --blue-ink: #0f1218; --yellow: #d4a017; --green: #4fa673; --red: #d9604f; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--font); -webkit-text-size-adjust: 100%; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 10px var(--pad); padding-top: max(10px, env(safe-area-inset-top)); background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.brand { display: flex; align-items: center; gap: 8px; font-size: 17px; margin-right: auto; }
+.brand img { border-radius: 6px; }
+.menu-b { border: 0; background: none; font-size: 22px; line-height: 1; padding: 4px 8px; }
+.menu { position: fixed; z-index: 9; right: var(--pad); top: 54px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 6px; display: grid; min-width: 220px; box-shadow: 0 8px 30px rgba(0,0,0,.12); }
+.menu button, .file-b { text-align: left; border: 0; background: none; padding: 10px 12px; border-radius: 8px; font-size: 15px; cursor: pointer; }
+.menu button:hover, .file-b:hover { background: var(--soft); }
+.file-b input { display: none; }
+main { max-width: 620px; margin: 0 auto; padding: 18px var(--pad) 40px; display: grid; gap: 14px; }
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; }
+.k { font-size: 12px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
+h1 { font-size: 24px; line-height: 1.2; margin: 0 0 6px; font-weight: 600; }
+.big { font-size: 42px; font-weight: 600; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.of { color: var(--muted); font-size: 15px; }
+.bar { height: 10px; background: var(--soft); border-radius: 99px; overflow: hidden; margin: 12px 0 8px; }
+.bar i { display: block; height: 100%; background: var(--green); border-radius: 99px; transition: width .4s; }
+.hint { color: var(--muted); font-size: 14px; margin: 4px 0 0; }
+.ladder { display: flex; gap: 4px; margin-top: 14px; }
+.ladder span { flex: 1; font-size: 11px; color: var(--muted); text-align: center; border-top: 4px solid var(--line); padding-top: 5px; line-height: 1.25; }
+.ladder span.done { border-color: var(--green); }
+.ladder span.now { border-color: var(--yellow); color: var(--ink); font-weight: 600; }
+.checks { display: grid; gap: 8px; margin-top: 10px; }
+.chk { display: flex; align-items: center; gap: 10px; text-align: left; width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 11px 12px; }
+.chk b { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--muted); flex: none; display: grid; place-items: center; font-size: 14px; color: var(--paper); }
+.chk.on b { background: var(--green); border-color: var(--green); }
+.chk.auto { cursor: default; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+.field input { width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 11px 12px; font-size: 18px; font-variant-numeric: tabular-nums; }
+.energy { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 12px; }
+.energy button { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 10px 0; font-size: 13px; line-height: 1.2; }
+.energy button.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.energy button span { display: block; font-size: 18px; font-weight: 600; }
+.go { margin-top: 12px; width: 100%; border: 0; background: var(--blue); color: var(--blue-ink); border-radius: 10px; padding: 13px; font-weight: 600; }
+.go.ghost { background: var(--soft); color: var(--ink); }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; text-align: center; margin-top: 6px; }
+.stats b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.stats small { color: var(--muted); font-size: 12px; }
+.spark { display: flex; align-items: flex-end; gap: 4px; height: 44px; margin-top: 12px; }
+.spark i { flex: 1; border-radius: 3px 3px 0 0; min-height: 3px; background: var(--line); }
+.spark i.e1, .spark i.e2 { background: var(--red); }
+.spark i.e3 { background: var(--yellow); }
+.spark i.e4, .spark i.e5 { background: var(--green); }
+.warn { border-color: color-mix(in srgb, var(--red) 45%, var(--line)); background: color-mix(in srgb, var(--red) 7%, var(--paper)); }
+.ok { border-color: color-mix(in srgb, var(--green) 35%, var(--line)); background: color-mix(in srgb, var(--green) 7%, var(--paper)); }
+.bal { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bal button { text-align: left; border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 10px 12px; }
+.bal button small { display: block; color: var(--muted); font-size: 13px; }
+.bal button b { font-size: 22px; font-variant-numeric: tabular-nums; }
+.why { border: 0; background: none; padding: 0; color: var(--muted); font-size: 15px; text-align: left; }
+dialog { border: 1px solid var(--line); border-radius: var(--r); background: var(--paper); color: var(--ink); padding: 18px; width: min(92vw, 420px); }
+dialog::backdrop { background: rgba(0,0,0,.35); }
+dialog h3 { margin: 0 0 12px; font-size: 18px; }
+dialog .field { margin-bottom: 10px; }
+dialog .btns { display: flex; gap: 8px; margin-top: 6px; }
+dialog .btns .go { margin: 0; }
