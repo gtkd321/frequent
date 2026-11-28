@@ -145,6 +145,11 @@ function wordCard(w, open) {
   const build = () => {
     card.dataset.built = '1';
     body.append(h('p', { class: 'freq', text: `#${w.rank} of ${D.meta.ranked} in Python's own code · ${fmt(w.count)} times in ${D.meta.files} files` }), h('p', { class: 'meaning', text: w.en }));
+    if (w.xl) {
+      const x = h('p', { class: 'xl' }, h('b', { text: w.xl.in.length ? `Shared ${w.xl.score}: ` : 'Python only. ' }), w.xl.in.length ? 'also works in ' + w.xl.in.join(', ') + '.' : '');
+      if (w.xl.ff) x.append(' ', h('span', { class: 'ff', text: 'Watch out: ' + w.xl.ff }));
+      body.append(x);
+    }
     const r = runner({ code: w.ex, saveKey: 'w:' + w.id, inp: w.inp, expected: w.out, onRun: (m, code) => {
       addPts(1, 'run:' + w.id);
       if (!m.err && code.trim() !== w.ex.trim()) addPts(2, 'try:' + w.id);
@@ -291,6 +296,7 @@ function about() {
     h('h2', { text: 'Where the words come from', style: 'margin-top:0' }),
     h('p', { text: `Every keyword, built-in name, method, operator and literal in Python ${D.meta.python}'s standard library was counted: ${D.meta.files} files and ${fmt(D.meta.tokens)} tokens, leaving out the test suites. The 180 most useful for a beginner are here, grouped into six weekly projects. Each card shows its real rank.` }),
     h('p', { text: 'Most frequent: ' + top + '.' }),
+    h('p', { text: 'Shared score: how much of the programming world the word also works in, from 0 to 100. Each of the 11 most used languages counts by its share of developers in the Stack Overflow 2026 survey (survey.stackoverflow.co/2026). Most shared: ' + D.words.filter(w => w.xl && w.xl.in.length).sort((a, b) => b.xl.score - a.xl.score || a.rank - b.rank).slice(0, 12).map(w => `${w.label} (${w.xl.score})`).join(', ') + '. "Watch out" marks false friends: the same word doing a different job elsewhere.' }),
     h('p', { class: 'hint', text: 'Library code leans on self, raise and isinstance more than a beginner script would, and print less, so the weeks start with what you need first and keep the counts honest on each card.' }),
     h('div', { class: 'row' }, h('button', { class: 'btn run', type: 'button', text: 'Close', onclick: () => wrap.remove() })));
   const wrap = h('div', { class: 'modal', onclick: e => { if (e.target === wrap) wrap.remove(); } }, box);

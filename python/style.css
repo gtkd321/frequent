@@ -51,6 +51,9 @@ h2 { font-size: 18px; margin: 26px 0 10px; font-weight: 600; }
 .dot.red { background: var(--red); } .dot.yellow { background: var(--yellow); } .dot.green { background: var(--green); }
 .freq { font-size: 13px; color: var(--muted); margin: 2px 0 10px; }
 .meaning { margin: 0 0 10px; }
+.xl { font-size: 14px; color: var(--muted); margin: 0 0 10px; }
+.xl b { color: var(--ink, inherit); font-weight: 600; }
+.xl .ff { display: block; margin-top: 4px; }
 
 .ed-wrap { border-radius: 10px; overflow: hidden; background: var(--code-bg); }
 .ed { display: block; width: 100%; min-height: 3.4em; resize: vertical; border: 0; margin: 0; padding: 12px 14px; background: var(--code-bg); color: var(--code-ink); font: 14px/1.55 var(--mono); tab-size: 4; white-space: pre; overflow: auto; }
