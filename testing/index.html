@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Frequent Testing</title>
+<meta name="description" content="Learn software testing by finding real bugs in a small app and writing reports a developer can act on.">
+<meta name="copyright" content="© 2026 Daniel Houlis. All rights reserved. Frequent is a trademark of Daniel Houlis.">
+<meta name="theme-color" content="#f5f1e8">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="icon.svg" alt="" width="24" height="24"><span>Frequent <b>Testing</b></span></div>
+  <button class="mo" id="mo" aria-label="Momentum"><span class="mo-q">Got momentum?</span> <b id="moN">0</b></button>
+  <button class="menu-b" id="menuB" aria-label="Menu" aria-haspopup="true">⋯</button>
+</header>
+<div class="menu" id="menu" hidden>
+  <button data-act="career">Where testing leads</button>
+  <button data-act="backup">Save a backup file</button>
+  <label class="file-b">Restore from a backup<input type="file" id="restore" accept="application/json,.json"></label>
+</div>
+<main id="main" tabindex="-1"></main>
+<nav class="tabs" aria-label="Sections">
+  <button data-tab="today" class="on">Today</button>
+  <button data-tab="hunt">Bug hunt</button>
+  <button data-tab="reports">Reports</button>
+</nav>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>
