@@ -34,6 +34,7 @@ const LIB = [
   ['bridge', 'Glute bridge', 'legs', 'load', [70, 10, 3], 'Glutes first: squeeze before you lift, so the knees do not take over.'],
   ['calf', 'Calf raise', 'legs', 'load', [140, 15, 3], 'Full stretch at the bottom, pause at the top.'],
   ['goblet', 'Goblet squat', 'legs', 'load', [30, 8, 2], 'Hold the dumbbell at your chest and sit down between your heels. Try a pause at the bottom.'],
+  ['zercher', 'Zercher squat', 'legs', 'load', [45, 8, 3], 'Bar in the crooks of your elbows (a pad or towel helps), hands together, chest tall. Sit down between your heels and stand by pushing the floor away. Start from the safety pins at waist height.'],
   ['cossack', 'Cossack squat', 'legs', 'body', [0, 6, 2], 'Wide stance. Shift onto one leg and keep the other straight. Go only as deep as the knee feels good.'],
   ['peterson', 'Peterson step-up', 'legs', 'body', [0, 10, 2], 'Stand on a low step, working heel slightly raised. Straighten the knee slowly, keeping it over your toes.'],
   ['tke', 'Terminal knee extension', 'legs', 'body', [0, 15, 2], 'Band behind the knee, anchored in front. Step back and straighten the knee fully against the band.'],
@@ -152,7 +153,9 @@ function quickLog(ex) {
 const WARM = [[0.5, 10], [0.7, 5]];
 const bestOf = id => entriesFor(id).reduce((m, e) => Math.max(m, e.w || 0), 0);
 const roundW = w => { const st = w < 40 ? 2.5 : 5; return Math.max(st, Math.round(w / st) * st); };
-const warmSets = max => WARM.map(([f, r]) => ({ pct: Math.round(f * 100), w: roundW(max * f), r }));
+// Barbell lifts never warm up below the empty 45 lb bar.
+const BAR = ['zercher', 'deadlift'];
+const warmSets = (max, bar) => WARM.map(([f, r]) => ({ pct: Math.round(f * 100), w: bar ? Math.max(45, roundW(max * f)) : roundW(max * f), r }));
 function warmBox(ex, getW) {
   const box = h('div', { class: 'warm' });
   const ticked = new Set();
@@ -161,9 +164,9 @@ function warmBox(ex, getW) {
     if (!(max > 0)) { box.hidden = true; return; } box.hidden = false;
     box.replaceChildren(
       h('p', { class: 'lab', text: `Warm up first · of your ${fmtNum(max)} lb max` }),
-      h('div', { class: 'chips' }, warmSets(max).map((x, i) => h('button', {
+      h('div', { class: 'chips' }, warmSets(max, BAR.includes(ex.id)).map((x, i) => h('button', {
         class: 'chip' + (ticked.has(i) ? ' on' : ''), type: 'button', 'aria-pressed': String(ticked.has(i)),
-        text: `${ticked.has(i) ? '✓ ' : ''}${x.pct}% · ${fmtNum(x.w)} lb × ${x.r}`,
+        text: `${ticked.has(i) ? '✓ ' : ''}${x.pct}% · ${BAR.includes(ex.id) && x.w === 45 ? 'empty bar' : fmtNum(x.w) + ' lb'} × ${x.r}`,
         onclick: () => { ticked.has(i) ? ticked.delete(i) : ticked.add(i); paint(); } }))));
   };
   paint(); box.repaint = paint; return box;
@@ -190,6 +193,7 @@ function toast(t, undo) {
 
 // ---------- Try something new ----------
 // Untried exercises, starting with the body area you have not worked for the longest.
+const FEATURED = ['zercher'];
 function newPicks() {
   const t = ymd(); const lastIn = {};
   for (const e of S.log) { const ex = exById(e.ex); if (ex) lastIn[ex.g] = e.d; }
@@ -197,7 +201,9 @@ function newPicks() {
   const seed = [...t].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
   const hash = s => [...s].reduce((a, c) => (a * 33 + c.charCodeAt(0)) >>> 0, seed);
   const cands = allEx().filter(e => status(e.id) === 'nw');
-  return cands.sort((a, b) => (age(b.g) - age(a.g)) || (hash(a.id) - hash(b.id)));
+  // Newly added exercises lead the card until you try them.
+  const lead = e => FEATURED.includes(e.id) ? 1 : 0;
+  return cands.sort((a, b) => (lead(b) - lead(a)) || (age(b.g) - age(a.g)) || (hash(a.id) - hash(b.id)));
 }
 function twistPick() {
   // When everything has been tried, suggest a twist you have not done on a frequent exercise.
